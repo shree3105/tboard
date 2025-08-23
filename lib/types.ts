@@ -63,5 +63,5 @@ export interface CasesFilters {
 
 export interface WebSocketMessage {
   action: 'create' | 'update' | 'delete';
-  case: string;
+  case: string; // This is the case ID according to API docs
 }

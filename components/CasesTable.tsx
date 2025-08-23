@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import { Case } from '@/lib/types';
-import { Edit, Trash2, Save, X, GripVertical, CheckCircle, ArrowUp, ArrowDown } from 'lucide-react';
+import { Edit, Trash2, Save, X, GripVertical, CheckCircle, Archive } from 'lucide-react';
 
 interface CasesTableProps {
   cases: Case[];
   onUpdateCase: (caseId: string, updates: Partial<Case>) => Promise<void>;
   onDeleteCase: (caseId: string) => Promise<void>;
   onCompleteCase: (caseId: string) => Promise<void>;
+  onArchiveCase: (caseId: string) => Promise<void>;
   onDragStart: (caseItem: Case) => void;
   onDragEnd: () => void;
+  onDropOnSection: (caseId: string, newSection: string) => Promise<void>;
 }
 
 export default function CasesTable({ 
@@ -18,11 +20,18 @@ export default function CasesTable({
   onUpdateCase, 
   onDeleteCase, 
   onCompleteCase,
+  onArchiveCase,
   onDragStart, 
-  onDragEnd
+  onDragEnd,
+  onDropOnSection
 }: CasesTableProps) {
   const [editingCase, setEditingCase] = useState<string | null>(null);
-  const [editingData, setEditingData] = useState<Partial<Case>>({});
+  const [editingData, setEditingData] = useState<{
+    name?: string;
+    diagnosis?: string;
+    outcome?: string;
+    section?: string;
+  }>({});
   const [newCaseData, setNewCaseData] = useState<Partial<Case>>({
     name: '',
     diagnosis: '',
@@ -33,6 +42,10 @@ export default function CasesTable({
 
   // Filter cases for table display and map sections
   const tableCases = cases.filter(caseItem => {
+    // Don't show archived cases in the main table
+    if (caseItem.archived) {
+      return false;
+    }
     // Show all cases except those that are on_list with surgery dates (they go to calendar)
     if (caseItem.section === 'on_list' && caseItem.surgery_date) {
       return false;
@@ -120,12 +133,8 @@ export default function CasesTable({
     await onCompleteCase(caseId);
   };
 
-  const handleMoveSection = async (caseId: string, newSection: string) => {
-    const updates: Partial<Case> = {
-      section: newSection === 'awaiting_surgery' ? 'on_list' : newSection,
-      surgery_date: null // Remove surgery date when moving back to table
-    };
-    await onUpdateCase(caseId, updates);
+  const handleArchive = async (caseId: string) => {
+    await onArchiveCase(caseId);
   };
 
   const handleAddNewCase = () => {
@@ -183,6 +192,19 @@ export default function CasesTable({
     onDragEnd();
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDropOnSection = (e: React.DragEvent, section: string) => {
+    e.preventDefault();
+    const caseId = e.dataTransfer.getData('text/plain');
+    if (caseId && section !== 'completed') {
+      onDropOnSection(caseId, section);
+    }
+  };
+
   const renderEditableCell = (caseItem: Case, field: keyof Case, value: string) => {
     const isEditing = editingCase === caseItem.id;
     const isCompleted = caseItem.section === 'completed';
@@ -193,16 +215,12 @@ export default function CasesTable({
 
     if (field === 'outcome') {
       return (
-        <select
+        <input
+          type="text"
           value={editingData.outcome || value}
           onChange={(e) => setEditingData({ ...editingData, outcome: e.target.value })}
           className="input-field text-sm"
-        >
-          <option value="Pending">Pending</option>
-          <option value="Scheduled">Scheduled</option>
-          <option value="Completed">Completed</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
+        />
       );
     }
 
@@ -219,14 +237,18 @@ export default function CasesTable({
       );
     }
 
-    return (
-      <input
-        type="text"
-        value={editingData[field] || value}
-        onChange={(e) => setEditingData({ ...editingData, [field]: e.target.value })}
-        className="input-field text-sm"
-      />
-    );
+    if (field === 'name' || field === 'diagnosis') {
+      return (
+        <input
+          type="text"
+          value={editingData[field] || value}
+          onChange={(e) => setEditingData({ ...editingData, [field]: e.target.value })}
+          className="input-field text-sm"
+        />
+      );
+    }
+
+    return <span className="font-medium">{value}</span>;
   };
 
   const renderNewCaseRow = () => {
@@ -256,17 +278,15 @@ export default function CasesTable({
           />
         </td>
         <td className="table-cell">
-          <select
+          <input
+            type="text"
             value={newCaseData.outcome || 'Pending'}
             onChange={(e) => setNewCaseData({ ...newCaseData, outcome: e.target.value })}
             className="input-field text-sm"
-          >
-            <option value="Pending">Pending</option>
-            <option value="Scheduled">Scheduled</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
+            placeholder="Outcome"
+          />
         </td>
+
         <td className="table-cell">-</td>
         <td className="table-cell">
           <div className="flex space-x-2">
@@ -294,7 +314,8 @@ export default function CasesTable({
     <div className="overflow-x-auto">
       {sectionOrder.map(section => {
         const sectionCases = groupedCases[section] || [];
-        if (sectionCases.length === 0 && !isAddingNew) return null;
+        // Always show new_referral section, hide others if empty and not adding new
+        if (sectionCases.length === 0 && !isAddingNew && section !== 'new_referral') return null;
 
         return (
           <div key={section} className="mb-6">
@@ -316,7 +337,10 @@ export default function CasesTable({
             </div>
 
             {/* Section Table */}
-            <div className="overflow-x-auto">
+            <div 
+              onDragOver={section !== 'completed' ? handleDragOver : undefined}
+              onDrop={section !== 'completed' ? (e) => handleDropOnSection(e, section) : undefined}
+            >
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -324,7 +348,6 @@ export default function CasesTable({
                     <th className="table-header">Name</th>
                     <th className="table-header">Diagnosis</th>
                     <th className="table-header">Outcome</th>
-                    <th className="table-header">Section</th>
                     <th className="table-header">Surgery Date</th>
                     <th className="table-header">Actions</th>
                   </tr>
@@ -355,9 +378,7 @@ export default function CasesTable({
                       <td className="table-cell">
                         {renderEditableCell(caseItem, 'outcome', caseItem.outcome)}
                       </td>
-                      <td className="table-cell">
-                        {renderEditableCell(caseItem, 'section', caseItem.section)}
-                      </td>
+
                       <td className="table-cell">
                         {caseItem.surgery_date ? new Date(caseItem.surgery_date).toLocaleDateString() : '-'}
                       </td>
@@ -401,22 +422,13 @@ export default function CasesTable({
                                 </button>
                               )}
                               {section === 'completed' && (
-                                <div className="flex space-x-1">
-                                  <button
-                                    onClick={() => handleMoveSection(caseItem.id, 'new_referral')}
-                                    className="text-purple-600 hover:text-purple-900"
-                                    title="Move to New Referrals"
-                                  >
-                                    <ArrowUp className="h-3 w-3" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleMoveSection(caseItem.id, 'awaiting_surgery')}
-                                    className="text-orange-600 hover:text-orange-900"
-                                    title="Move to Awaiting Surgery"
-                                  >
-                                    <ArrowDown className="h-3 w-3" />
-                                  </button>
-                                </div>
+                                <button
+                                  onClick={() => handleArchive(caseItem.id)}
+                                  className="text-gray-600 hover:text-gray-900"
+                                  title="Archive"
+                                >
+                                  <Archive className="h-4 w-4" />
+                                </button>
                               )}
                               <button
                                 onClick={() => handleDelete(caseItem.id)}

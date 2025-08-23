@@ -3,17 +3,32 @@
 import { useState, useMemo } from 'react';
 import { Case } from '@/lib/types';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, GripVertical } from 'lucide-react';
 
 interface HorizontalCalendarProps {
   cases: Case[];
   onDrop: (date: string) => Promise<void>;
   onCompleteCase: (caseId: string) => Promise<void>;
+  onUpdateCase: (caseId: string, updates: Partial<Case>) => Promise<void>;
+  onDropOnSection: (caseId: string, newSection: string) => Promise<void>;
+  onDropOnDate: (caseId: string, date: string) => Promise<void>;
+  onReorderCases: (caseId: string, targetDate: string, newOrderIndex: number) => Promise<void>;
   draggedCase: Case | null;
 }
 
-export default function HorizontalCalendar({ cases, onDrop, onCompleteCase, draggedCase }: HorizontalCalendarProps) {
+export default function HorizontalCalendar({ 
+  cases, 
+  onDrop, 
+  onCompleteCase, 
+  onUpdateCase, 
+  onDropOnSection, 
+  onDropOnDate,
+  onReorderCases,
+  draggedCase 
+}: HorizontalCalendarProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   // Generate dates for the current week (7 days)
   const weekDates = useMemo(() => {
@@ -21,25 +36,97 @@ export default function HorizontalCalendar({ cases, onDrop, onCompleteCase, drag
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   }, [currentWeek]);
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, date?: Date, insertIndex?: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    
+    if (date) {
+      const dateString = format(date, 'yyyy-MM-dd');
+      setDragOverDate(dateString);
+      setDragOverIndex(insertIndex ?? null);
+    }
   };
 
-  const handleDrop = async (e: React.DragEvent, date: Date) => {
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear drag over state if we're actually leaving the drop zone
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      setDragOverDate(null);
+      setDragOverIndex(null);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, date: Date, insertIndex?: number) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    const caseId = e.dataTransfer.getData('text/plain');
     const dateString = format(date, 'yyyy-MM-dd');
-    await onDrop(dateString);
+    
+    setDragOverDate(null);
+    setDragOverIndex(null);
+    
+    if (!caseId) return;
+
+    const draggedCaseData = cases.find(c => c.id === caseId);
+    if (!draggedCaseData) return;
+
+    // Check if we're moving to the same date (reordering)
+    const isSameDate = draggedCaseData.surgery_date && isSameDay(new Date(draggedCaseData.surgery_date), date);
+    
+    if (isSameDate && insertIndex !== undefined) {
+      // Reordering within the same date
+      await onReorderCases(caseId, dateString, insertIndex + 1);
+    } else {
+      // Moving to a different date
+      const casesOnTargetDate = getCasesForDate(date);
+      const newOrderIndex = insertIndex !== undefined ? insertIndex + 1 : casesOnTargetDate.length + 1;
+      
+      await onDropOnDate(caseId, dateString);
+      
+      // If we have a specific position, update the order
+      if (insertIndex !== undefined) {
+        await onReorderCases(caseId, dateString, newOrderIndex);
+      }
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, caseItem: Case) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', caseItem.id);
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverDate(null);
+    setDragOverIndex(null);
+  };
+
+  const handleCaseDragOver = (e: React.DragEvent, date: Date, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleDragOver(e, date, index);
+  };
+
+  const handleCaseDrop = (e: React.DragEvent, date: Date, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleDrop(e, date, index);
   };
 
   const getCasesForDate = (date: Date) => {
-    return cases.filter(caseItem => {
-      // Only show on_list cases with surgery dates
-      if (caseItem.section !== 'on_list' || !caseItem.surgery_date) {
-        return false;
-      }
-      return isSameDay(new Date(caseItem.surgery_date), date);
-    });
+    return cases
+      .filter(caseItem => {
+        // Only show on_list cases with surgery dates
+        if (caseItem.section !== 'on_list' || !caseItem.surgery_date) {
+          return false;
+        }
+        return isSameDay(new Date(caseItem.surgery_date), date);
+      })
+      .sort((a, b) => a.order_index - b.order_index); // Sort by order_index
   };
 
   const getDayName = (date: Date) => {
@@ -86,6 +173,16 @@ export default function HorizontalCalendar({ cases, onDrop, onCompleteCase, drag
     await onCompleteCase(caseId);
   };
 
+  const renderDropIndicator = (date: Date, index: number) => {
+    const dateString = format(date, 'yyyy-MM-dd');
+    if (dragOverDate === dateString && dragOverIndex === index) {
+      return (
+        <div className="h-1 bg-primary-500 rounded-full my-1 transition-all duration-200" />
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="p-6">
       {/* Calendar Navigation */}
@@ -121,6 +218,7 @@ export default function HorizontalCalendar({ cases, onDrop, onCompleteCase, drag
           const casesForDate = getCasesForDate(date);
           const isCurrentDay = isToday(date);
           const isPastDay = isPast(date);
+          const dateString = format(date, 'yyyy-MM-dd');
 
           return (
             <div
@@ -132,9 +230,10 @@ export default function HorizontalCalendar({ cases, onDrop, onCompleteCase, drag
                   ? 'border-gray-200 bg-gray-50'
                   : 'border-gray-200 bg-white'
               } ${
-                draggedCase ? 'border-dashed border-2 border-primary-300' : ''
+                draggedCase && dragOverDate === dateString ? 'border-dashed border-2 border-primary-300 bg-primary-25' : ''
               }`}
-              onDragOver={handleDragOver}
+              onDragOver={(e) => handleDragOver(e, date)}
+              onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, date)}
             >
               {/* Date Header */}
@@ -149,23 +248,43 @@ export default function HorizontalCalendar({ cases, onDrop, onCompleteCase, drag
               </div>
 
               {/* Cases for this date */}
-              <div className="space-y-2">
-                {casesForDate.map((caseItem) => (
-                  <div
-                    key={caseItem.id}
-                    className="bg-orange-100 text-orange-800 border border-orange-200 p-2 rounded text-xs relative group"
-                  >
-                    <div className="font-medium truncate">{caseItem.name}</div>
-                    <div className="text-xs opacity-75 truncate">{caseItem.diagnosis}</div>
-                    <button
-                      onClick={() => handleComplete(caseItem.id)}
-                      className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-800"
-                      title="Complete"
+              <div className="space-y-1">
+                {casesForDate.map((caseItem, index) => (
+                  <div key={caseItem.id}>
+                    {/* Drop indicator at the top */}
+                    {renderDropIndicator(date, index)}
+                    
+                    <div
+                      className="bg-orange-100 text-orange-800 border border-orange-200 p-2 rounded text-xs relative group cursor-grab active:cursor-grabbing hover:bg-orange-200 transition-colors"
+                      draggable={true}
+                      onDragStart={(e) => handleDragStart(e, caseItem)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={(e) => handleCaseDragOver(e, date, index)}
+                      onDrop={(e) => handleCaseDrop(e, date, index)}
                     >
-                      <CheckCircle className="h-3 w-3" />
-                    </button>
+                      <div className="flex items-center justify-between">
+                        <GripVertical className="h-3 w-3 text-orange-600 flex-shrink-0" />
+                        <div className="flex-1 ml-1 min-w-0">
+                          <div className="font-medium truncate">{caseItem.name}</div>
+                          <div className="text-xs opacity-75 truncate">{caseItem.diagnosis}</div>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleComplete(caseItem.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-800 flex-shrink-0 ml-1"
+                          title="Complete"
+                        >
+                          <CheckCircle className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
+                
+                {/* Drop indicator at the bottom */}
+                {casesForDate.length > 0 && renderDropIndicator(date, casesForDate.length)}
                 
                 {casesForDate.length === 0 && (
                   <div className="text-center text-gray-400 text-xs py-4">
@@ -174,8 +293,8 @@ export default function HorizontalCalendar({ cases, onDrop, onCompleteCase, drag
                 )}
               </div>
 
-              {/* Drop zone indicator */}
-              {draggedCase && (
+              {/* Drop zone indicator for empty dates */}
+              {draggedCase && casesForDate.length === 0 && dragOverDate === dateString && (
                 <div className="mt-2 p-2 border-2 border-dashed border-primary-300 rounded text-center text-primary-600 text-xs">
                   Drop here to schedule
                 </div>

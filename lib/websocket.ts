@@ -22,16 +22,18 @@ export class WebSocketClient {
       this.ws = new WebSocket(url);
 
       this.ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected successfully to:', url);
         this.reconnectAttempts = 0;
       };
 
       this.ws.onmessage = (event) => {
+        console.log('WebSocket raw message received:', event.data);
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
+          console.log('WebSocket parsed message:', message);
           this.notifyListeners(message);
         } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
+          console.error('Failed to parse WebSocket message:', error, 'Raw data:', event.data);
         }
       };
 
