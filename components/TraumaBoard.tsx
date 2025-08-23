@@ -24,9 +24,13 @@ export default function TraumaBoard() {
   const fetchCases = async () => {
     try {
       setLoading(true);
+      console.log('Fetching main cases (non-archived)...');
       const data = await casesAPI.getCases();
+      console.log('Main cases API response:', data);
+      console.log('Number of main cases:', data.length);
       setCases(data);
     } catch (error: any) {
+      console.error('Error fetching main cases:', error);
       toast.error('Failed to fetch cases');
     } finally {
       setLoading(false);
@@ -36,9 +40,13 @@ export default function TraumaBoard() {
   const fetchArchivedCases = async () => {
     try {
       setArchivedLoading(true);
+      console.log('Fetching archived cases...');
       const data = await casesAPI.getCases({ archived: true });
+      console.log('Archived cases API response:', data);
+      console.log('Number of archived cases:', data.length);
       setArchivedCases(data);
     } catch (error: any) {
+      console.error('Error fetching archived cases:', error);
       toast.error('Failed to fetch archived cases');
     } finally {
       setArchivedLoading(false);
@@ -440,9 +448,7 @@ export default function TraumaBoard() {
               <button
                 onClick={() => {
                   setActiveTab('archived');
-                  if (archivedCases.length === 0) {
-                    fetchArchivedCases();
-                  }
+                  fetchArchivedCases(); // Always fetch to ensure we get latest data
                 }}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'archived'

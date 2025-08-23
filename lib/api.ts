@@ -65,12 +65,22 @@ export const casesAPI = {
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          params.append(key, value.toString());
+          // Handle boolean values properly
+          if (typeof value === 'boolean') {
+            params.append(key, value ? 'true' : 'false');
+          } else {
+            params.append(key, value.toString());
+          }
         }
       });
     }
     
-    const response = await api.get(`/cases/?${params.toString()}`);
+    const url = `/cases/?${params.toString()}`;
+    console.log('API getCases URL:', url);
+    console.log('API getCases filters:', filters);
+    
+    const response = await api.get(url);
+    console.log('API getCases response:', response.data);
     return response.data;
   },
 

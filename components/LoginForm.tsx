@@ -26,8 +26,8 @@ export default function LoginForm() {
       await auth.login(data);
       console.log('Login successful, token stored');
       toast.success('Login successful!');
-      console.log('Redirecting to dashboard...');
-      router.push('/dashboard');
+      console.log('Redirecting to main page...');
+      router.push('/');
     } catch (error: any) {
       console.error('Login error:', error);
       toast.error(error.response?.data?.detail || 'Login failed');
