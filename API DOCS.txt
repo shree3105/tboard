@@ -1,0 +1,159 @@
+Authentication
+Login
+
+Endpoint: POST /users/login
+
+Request Body:
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+
+Response:
+
+{
+  "access_token": "<JWT_TOKEN>",
+  "token_type": "bearer"
+}
+
+
+Notes:
+
+Use access_token in Authorization header for all protected requests.
+
+Header format: Authorization: Bearer <JWT_TOKEN>
+
+Register
+
+Endpoint: POST /users/register
+
+Request Body:
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+
+Response:
+
+{
+  "id": "<user_id>",
+  "email": "user@example.com",
+  "created_at": "2025-08-23T08:00:00Z"
+}
+
+
+Notes: Creates a new user. Returns the created user info.
+
+Cases API
+
+All endpoints require Authorization: Bearer <JWT_TOKEN>.
+
+Get Cases
+
+Endpoint: GET /cases/
+
+Query Parameters (optional, dynamic based on Case model):
+
+name
+
+diagnosis
+
+outcome
+
+section
+
+surgery_date_from (YYYY-MM-DD)
+
+surgery_date_to (YYYY-MM-DD)
+
+archived (true/false)
+
+Response: Array of case objects:
+
+[
+  {
+    "id": "uuid",
+    "name": "John Doe",
+    "diagnosis": "Tibia fracture",
+    "outcome": "Pending",
+    "section": "new_referral",
+    "surgery_date": "2025-08-25",
+    "order_index": 1,
+    "archived": false,
+    "created_at": "2025-08-22T06:09:27Z",
+    "updated_at": "2025-08-22T06:09:27Z"
+  }
+]
+
+Create Case
+
+Endpoint: POST /cases/
+
+Request Body:
+
+{
+  "name": "John Doe",
+  "diagnosis": "Tibia fracture",
+  "outcome": "Pending",
+  "section": "new_referral",
+  "surgery_date": "2025-08-25",
+  "order_index": 1
+}
+
+
+Response: Created case object (same structure as above).
+
+Side Effect: Broadcasts {"action": "create", "case": "<id>"} over WebSocket.
+
+Update Case
+
+Endpoint: PATCH /cases/{case_id}
+
+Request Body: Only include fields to update.
+
+{
+  "outcome": "Scheduled",
+  "section": "on_list"
+}
+
+
+Response: Updated case object.
+
+Side Effect: Broadcasts {"action": "update", "case": "<id>"} over WebSocket.
+
+Delete Case
+
+Endpoint: DELETE /cases/{case_id}
+
+Response:
+
+{"detail": "Deleted"}
+
+
+Side Effect: Broadcasts {"action": "delete", "case": "<id>"} over WebSocket.
+
+WebSocket
+
+URL: wss://<domain>/ws?token=<JWT_TOKEN>
+
+Authentication: token query param (JWT token).
+
+Broadcast Events:
+
+Create Case: {"action": "create", "case": "<id>"}
+
+Update Case: {"action": "update", "case": "<id>"}
+
+Delete Case: {"action": "delete", "case": "<id>"}
+
+Client Message: Optional. Frontend can also send text to WebSocket (currently broadcasted to all).
+
+Date Filtering Notes
+
+Any *_from or *_to parameter (like surgery_date_from) must be YYYY-MM-DD.
+
+Filters by default only return non-archived cases unless archived=true is specified.
