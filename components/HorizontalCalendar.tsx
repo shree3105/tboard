@@ -7,6 +7,7 @@ import { CheckCircle, GripVertical } from 'lucide-react';
 
 interface HorizontalCalendarProps {
   cases: Case[];
+  calendarCases: Case[]; // Separate cases for calendar (includes archived and completed)
   onDrop: (date: string) => Promise<void>;
   onCompleteCase: (caseId: string) => Promise<void>;
   onUpdateCase: (caseId: string, updates: Partial<Case>) => Promise<void>;
@@ -14,17 +15,20 @@ interface HorizontalCalendarProps {
   onDropOnDate: (caseId: string, date: string) => Promise<void>;
   onReorderCases: (caseId: string, targetDate: string, newOrderIndex: number) => Promise<void>;
   draggedCase: Case | null;
+  onWeekChange: (startDate: Date, endDate: Date) => Promise<void>;
 }
 
 export default function HorizontalCalendar({ 
   cases, 
+  calendarCases,
   onDrop, 
   onCompleteCase, 
   onUpdateCase, 
   onDropOnSection, 
   onDropOnDate,
   onReorderCases,
-  draggedCase 
+  draggedCase,
+  onWeekChange
 }: HorizontalCalendarProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
@@ -118,10 +122,10 @@ export default function HorizontalCalendar({
   };
 
   const getCasesForDate = (date: Date) => {
-    return cases
+    return calendarCases
       .filter(caseItem => {
-        // Only show on_list cases with surgery dates
-        if (caseItem.section !== 'on_list' || !caseItem.surgery_date) {
+        // Show any case with surgery date (including archived and completed)
+        if (!caseItem.surgery_date) {
           return false;
         }
         return isSameDay(new Date(caseItem.surgery_date), date);
@@ -157,16 +161,28 @@ export default function HorizontalCalendar({
     return date < new Date() && !isToday(date);
   };
 
-  const goToPreviousWeek = () => {
-    setCurrentWeek(prev => addDays(prev, -7));
+  const goToPreviousWeek = async () => {
+    const newWeek = addDays(currentWeek, -7);
+    setCurrentWeek(newWeek);
+    const startDate = startOfWeek(newWeek, { weekStartsOn: 6 });
+    const endDate = addDays(startDate, 6);
+    await onWeekChange(startDate, endDate);
   };
 
-  const goToNextWeek = () => {
-    setCurrentWeek(prev => addDays(prev, 7));
+  const goToNextWeek = async () => {
+    const newWeek = addDays(currentWeek, 7);
+    setCurrentWeek(newWeek);
+    const startDate = startOfWeek(newWeek, { weekStartsOn: 6 });
+    const endDate = addDays(startDate, 6);
+    await onWeekChange(startDate, endDate);
   };
 
-  const goToToday = () => {
-    setCurrentWeek(new Date());
+  const goToToday = async () => {
+    const today = new Date();
+    setCurrentWeek(today);
+    const startDate = startOfWeek(today, { weekStartsOn: 6 });
+    const endDate = addDays(startDate, 6);
+    await onWeekChange(startDate, endDate);
   };
 
   const handleComplete = async (caseId: string) => {
@@ -255,30 +271,38 @@ export default function HorizontalCalendar({
                     {renderDropIndicator(date, index)}
                     
                     <div
-                      className="bg-orange-100 text-orange-800 border border-orange-200 p-2 rounded text-xs relative group cursor-grab active:cursor-grabbing hover:bg-orange-200 transition-colors"
-                      draggable={true}
-                      onDragStart={(e) => handleDragStart(e, caseItem)}
+                      className={`p-2 rounded text-xs relative group transition-colors ${
+                        caseItem.section === 'completed'
+                          ? 'bg-green-100 text-green-800 border border-green-200 cursor-default'
+                          : 'bg-orange-100 text-orange-800 border border-orange-200 cursor-grab active:cursor-grabbing hover:bg-orange-200'
+                      }`}
+                      draggable={caseItem.section !== 'completed'}
+                      onDragStart={caseItem.section !== 'completed' ? (e) => handleDragStart(e, caseItem) : undefined}
                       onDragEnd={handleDragEnd}
-                      onDragOver={(e) => handleCaseDragOver(e, date, index)}
-                      onDrop={(e) => handleCaseDrop(e, date, index)}
+                      onDragOver={caseItem.section !== 'completed' ? (e) => handleCaseDragOver(e, date, index) : undefined}
+                      onDrop={caseItem.section !== 'completed' ? (e) => handleCaseDrop(e, date, index) : undefined}
                     >
                       <div className="flex items-center justify-between">
-                        <GripVertical className="h-3 w-3 text-orange-600 flex-shrink-0" />
-                        <div className="flex-1 ml-1 min-w-0">
+                        {caseItem.section !== 'completed' && (
+                          <GripVertical className="h-3 w-3 text-orange-600 flex-shrink-0" />
+                        )}
+                        <div className={`flex-1 min-w-0 ${caseItem.section !== 'completed' ? 'ml-1' : ''}`}>
                           <div className="font-medium truncate">{caseItem.name}</div>
                           <div className="text-xs opacity-75 truncate">#{caseItem.hospital_number}</div>
                           <div className="text-xs opacity-75 truncate">{caseItem.diagnosis}</div>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleComplete(caseItem.id);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-800 flex-shrink-0 ml-1"
-                          title="Complete"
-                        >
-                          <CheckCircle className="h-3 w-3" />
-                        </button>
+                        {caseItem.section !== 'completed' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleComplete(caseItem.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-800 flex-shrink-0 ml-1"
+                            title="Complete"
+                          >
+                            <CheckCircle className="h-3 w-3" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

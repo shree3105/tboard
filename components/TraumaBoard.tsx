@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { casesAPI } from '@/lib/api';
-import { Case } from '@/lib/types';
+import { Case, CasesFilters, WebSocketMessage } from '@/lib/types';
 import { Plus, LogOut } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import CasesTable from './CasesTable';
@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 export default function TraumaBoard() {
   const [cases, setCases] = useState<Case[]>([]);
   const [archivedCases, setArchivedCases] = useState<Case[]>([]);
+  const [calendarCases, setCalendarCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
   const [archivedLoading, setArchivedLoading] = useState(false);
   const [draggedCase, setDraggedCase] = useState<Case | null>(null);
@@ -29,7 +30,7 @@ export default function TraumaBoard() {
       console.log('Main cases API response:', data);
       console.log('Number of main cases:', data.length);
       setCases(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching main cases:', error);
       toast.error('Failed to fetch cases');
     } finally {
@@ -45,7 +46,7 @@ export default function TraumaBoard() {
       console.log('Archived cases API response:', data);
       console.log('Number of archived cases:', data.length);
       setArchivedCases(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching archived cases:', error);
       toast.error('Failed to fetch archived cases');
     } finally {
@@ -53,7 +54,54 @@ export default function TraumaBoard() {
     }
   };
 
-  const handleWebSocketMessage = async (message: any) => {
+  const fetchCalendarCases = async (startDate?: Date, endDate?: Date) => {
+    try {
+      console.log('Fetching calendar cases...', { startDate, endDate });
+      
+      // Build filters for the selected week
+      const filters: Partial<CasesFilters> = {};
+      if (startDate && endDate) {
+        filters.surgery_date_from = startDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+        filters.surgery_date_to = endDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+      }
+      
+      // For calendar, we need to fetch both archived and non-archived cases
+      // First, fetch non-archived cases
+      const nonArchivedFilters = { ...filters, archived: false };
+      const nonArchivedData = await casesAPI.getCases(nonArchivedFilters);
+      console.log('Non-archived calendar cases:', nonArchivedData.length);
+      
+      // Then, fetch archived cases
+      const archivedFilters = { ...filters, archived: true };
+      const archivedData = await casesAPI.getCases(archivedFilters);
+      console.log('Archived calendar cases:', archivedData.length);
+      
+      // Combine both sets of data
+      const combinedData = [...nonArchivedData, ...archivedData];
+      console.log('Total calendar cases:', combinedData.length);
+      
+      setCalendarCases(combinedData);
+    } catch (error: unknown) {
+      console.error('Error fetching calendar cases:', error);
+      toast.error('Failed to fetch calendar cases');
+    }
+  };
+
+  const getCurrentWeekDates = () => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay() + 6); // Start on Saturday
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6); // End on Friday
+    return { startOfWeek, endOfWeek };
+  };
+
+  const handleWeekChange = async (startDate: Date, endDate: Date) => {
+    console.log('Week changed:', { startDate, endDate });
+    await fetchCalendarCases(startDate, endDate);
+  };
+
+  const handleWebSocketMessage = async (message: WebSocketMessage) => {
     try {
       console.log('Processing WebSocket message:', message);
       
@@ -63,7 +111,10 @@ export default function TraumaBoard() {
             console.log('Case created via WebSocket, case ID:', message.case);
             // For creates, fetch the new case data and add it to state
             try {
-              const allCases = await casesAPI.getCases();
+              // Fetch both archived and non-archived cases for WebSocket updates
+              const nonArchivedCases = await casesAPI.getCases({ archived: false });
+              const archivedCases = await casesAPI.getCases({ archived: true });
+              const allCases = [...nonArchivedCases, ...archivedCases];
               const newCase = allCases.find(c => c.id === message.case);
               if (newCase) {
                 setCases(prev => {
@@ -74,14 +125,28 @@ export default function TraumaBoard() {
                   }
                   return prev;
                 });
+                setCalendarCases(prev => {
+                  const exists = prev.some(c => c.id === newCase.id);
+                  if (!exists) {
+                    console.log('Adding new case to calendar state:', newCase);
+                    return [...prev, newCase];
+                  }
+                  return prev;
+                });
               }
-            } catch (error) {
+            } catch (error: unknown) {
               console.error('Failed to fetch new case data:', error);
               fetchCases(); // Fallback to full refresh
+              // Also refresh calendar cases for current week
+              const { startOfWeek, endOfWeek } = getCurrentWeekDates();
+              fetchCalendarCases(startOfWeek, endOfWeek);
             }
           } else {
             console.log('No case ID in create message, refreshing all cases');
             fetchCases();
+            // Also refresh calendar cases for current week
+            const { startOfWeek, endOfWeek } = getCurrentWeekDates();
+            fetchCalendarCases(startOfWeek, endOfWeek);
           }
           break;
         case 'update':
@@ -89,12 +154,20 @@ export default function TraumaBoard() {
             console.log('Case updated via WebSocket, case ID:', message.case);
             // For updates, fetch the updated case data
             try {
-              const allCases = await casesAPI.getCases();
+              // Fetch both archived and non-archived cases for WebSocket updates
+              const nonArchivedCases = await casesAPI.getCases({ archived: false });
+              const archivedCases = await casesAPI.getCases({ archived: true });
+              const allCases = [...nonArchivedCases, ...archivedCases];
               const updatedCase = allCases.find(c => c.id === message.case);
               if (updatedCase) {
                 setCases(prev => {
                   const updated = prev.map(c => c.id === updatedCase.id ? updatedCase : c);
                   console.log('Updated case in state:', updatedCase);
+                  return updated;
+                });
+                // Also update calendar cases
+                setCalendarCases(prev => {
+                  const updated = prev.map(c => c.id === updatedCase.id ? updatedCase : c);
                   return updated;
                 });
                 // Also update archived cases if the case was archived
@@ -115,13 +188,19 @@ export default function TraumaBoard() {
                 setCases(prev => prev.filter(c => c.id !== message.case));
                 setArchivedCases(prev => prev.filter(c => c.id !== message.case));
               }
-            } catch (error) {
+            } catch (error: unknown) {
               console.error('Failed to fetch updated case data:', error);
               fetchCases(); // Fallback to full refresh
+              // Also refresh calendar cases for current week
+              const { startOfWeek, endOfWeek } = getCurrentWeekDates();
+              fetchCalendarCases(startOfWeek, endOfWeek);
             }
           } else {
             console.log('No case ID in update message, refreshing all cases');
             fetchCases();
+            // Also refresh calendar cases for current week
+            const { startOfWeek, endOfWeek } = getCurrentWeekDates();
+            fetchCalendarCases(startOfWeek, endOfWeek);
           }
           break;
         case 'delete':
@@ -132,6 +211,11 @@ export default function TraumaBoard() {
               console.log('Removed case from state');
               return filtered;
             });
+            setCalendarCases(prev => {
+              const filtered = prev.filter(c => c.id !== message.case);
+              console.log('Removed case from calendar state');
+              return filtered;
+            });
             setArchivedCases(prev => {
               const filtered = prev.filter(c => c.id !== message.case);
               console.log('Removed case from archived state');
@@ -140,11 +224,17 @@ export default function TraumaBoard() {
           } else {
             console.log('No case ID in delete message, refreshing all cases');
             fetchCases();
+            // Also refresh calendar cases for current week
+            const { startOfWeek, endOfWeek } = getCurrentWeekDates();
+            fetchCalendarCases(startOfWeek, endOfWeek);
           }
           break;
         default:
           console.log('Unknown WebSocket action, refreshing all cases:', message.action);
           fetchCases();
+          // Also refresh calendar cases for current week
+          const { startOfWeek, endOfWeek } = getCurrentWeekDates();
+          fetchCalendarCases(startOfWeek, endOfWeek);
       }
     } catch (error) {
       console.error('Error handling WebSocket message:', error);
@@ -155,6 +245,10 @@ export default function TraumaBoard() {
 
   useEffect(() => {
     fetchCases();
+    
+    // Fetch calendar cases for current week on initial load
+    const { startOfWeek, endOfWeek } = getCurrentWeekDates();
+    fetchCalendarCases(startOfWeek, endOfWeek);
     
     // Initialize WebSocket
     const token = auth.getToken();
@@ -202,8 +296,9 @@ export default function TraumaBoard() {
         history: caseData.history || ''
       });
       setCases(prev => [...prev, newCase]);
+      setCalendarCases(prev => [...prev, newCase]);
       toast.success('Case created successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Failed to create case');
     }
   };
@@ -218,15 +313,17 @@ export default function TraumaBoard() {
 
       // Optimistic update - update local state immediately
       setCases(prev => prev.map(c => c.id === caseId ? { ...c, ...updates } : c));
+      setCalendarCases(prev => prev.map(c => c.id === caseId ? { ...c, ...updates } : c));
 
       // Then update server
       const updatedCase = await casesAPI.updateCase(caseId, updates);
       
       // Update with server response (in case server made additional changes)
       setCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
+      setCalendarCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
       
       toast.success('Case updated successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Revert optimistic update on error
       fetchCases();
       toast.error('Failed to update case');
@@ -237,33 +334,42 @@ export default function TraumaBoard() {
     try {
       await casesAPI.deleteCase(caseId);
       setCases(prev => prev.filter(c => c.id !== caseId));
+      setCalendarCases(prev => prev.filter(c => c.id !== caseId));
       setArchivedCases(prev => prev.filter(c => c.id !== caseId));
       toast.success('Case deleted successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Failed to delete case');
     }
   };
 
   const handleCompleteCase = async (caseId: string) => {
     try {
-      // Optimistic update
+      // Find the current case to preserve its outcome
+      const currentCase = cases.find(c => c.id === caseId);
+      if (!currentCase) return;
+
+      // Optimistic update - only change section, preserve outcome and surgery_date
       setCases(prev => prev.map(c => c.id === caseId ? {
         ...c,
-        section: 'completed',
-        outcome: 'Completed',
-        surgery_date: null
+        section: 'completed'
+        // Keep existing outcome and surgery_date
+      } : c));
+      setCalendarCases(prev => prev.map(c => c.id === caseId ? {
+        ...c,
+        section: 'completed'
+        // Keep existing outcome and surgery_date
       } : c));
 
       const updatedCase = await casesAPI.updateCase(caseId, {
-        section: 'completed',
-        outcome: 'Completed',
-        surgery_date: null
+        section: 'completed'
+        // Don't change outcome or surgery_date
       });
       
       // Update with server response
       setCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
+      setCalendarCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
       toast.success('Case marked as completed');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Revert on error
       fetchCases();
       toast.error('Failed to complete case');
@@ -290,7 +396,7 @@ export default function TraumaBoard() {
       await handleUpdateCase(draggedCase.id, updates);
       setDraggedCase(null);
       toast.success('Case scheduled successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Failed to schedule case');
     }
   };
@@ -304,7 +410,7 @@ export default function TraumaBoard() {
       
       await handleUpdateCase(caseId, updates);
       toast.success(`Case moved to ${newSection === 'awaiting_surgery' ? 'Awaiting Surgery' : 'New Referrals'}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Failed to move case');
     }
   };
@@ -318,7 +424,7 @@ export default function TraumaBoard() {
       
       await handleUpdateCase(caseId, updates);
       toast.success('Case scheduled successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Failed to schedule case');
     }
   };
@@ -361,7 +467,7 @@ export default function TraumaBoard() {
       );
 
       toast.success('Cases reordered successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Failed to reorder cases');
     }
   };
@@ -372,6 +478,7 @@ export default function TraumaBoard() {
       const caseToArchive = cases.find(c => c.id === caseId);
       if (caseToArchive) {
         setCases(prev => prev.map(c => c.id === caseId ? { ...c, archived: true } : c));
+        setCalendarCases(prev => prev.map(c => c.id === caseId ? { ...c, archived: true } : c));
         setArchivedCases(prev => [...prev, { ...caseToArchive, archived: true }]);
       }
 
@@ -381,9 +488,10 @@ export default function TraumaBoard() {
       
       // Update with server response
       setCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
+      setCalendarCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
       setArchivedCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
       toast.success('Case archived successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Revert on error
       fetchCases();
       toast.error('Failed to archive case');
@@ -494,6 +602,7 @@ export default function TraumaBoard() {
               </div>
               <HorizontalCalendar
                 cases={cases}
+                calendarCases={calendarCases}
                 onDrop={handleDropFromTableOnDate}
                 onCompleteCase={handleCompleteCase}
                 onUpdateCase={handleUpdateCase}
@@ -501,6 +610,7 @@ export default function TraumaBoard() {
                 onDropOnDate={handleDropOnDate}
                 onReorderCases={handleReorderCases}
                 draggedCase={draggedCase}
+                onWeekChange={handleWeekChange}
               />
             </div>
           </>

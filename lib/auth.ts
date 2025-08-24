@@ -125,6 +125,7 @@ export const auth = {
           };
         } catch (error) {
           console.error('Error parsing token payload:', error);
+          return null;
         }
       }
     }

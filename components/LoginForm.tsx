@@ -28,9 +28,12 @@ export default function LoginForm() {
       toast.success('Login successful!');
       console.log('Redirecting to main page...');
       router.push('/');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-      toast.error(error.response?.data?.detail || 'Login failed');
+      const errorMessage = error && typeof error === 'object' && 'response' in error 
+        ? (error.response as any)?.data?.detail || 'Login failed'
+        : 'Login failed';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

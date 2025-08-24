@@ -62,6 +62,8 @@ export default function CasesTable({
     if (caseItem.section === 'on_list' && caseItem.surgery_date) {
       return false;
     }
+    // Show completed cases in the main table regardless of surgery date
+    // (they will also appear on calendar if they have surgery dates)
     return true;
   }).map(caseItem => {
     // Map on_list cases without surgery dates to awaiting_surgery for display
@@ -96,8 +98,6 @@ export default function CasesTable({
         return 'Awaiting Surgery';
       case 'completed':
         return 'Completed';
-      case 'on_list':
-        return 'On List';
       case 'hip_and_knee':
         return 'Hip and Knee';
       case 'foot_and_ankle':
@@ -121,8 +121,6 @@ export default function CasesTable({
         return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'completed':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'on_list':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'hip_and_knee':
         return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       case 'foot_and_ankle':
@@ -275,8 +273,13 @@ export default function CasesTable({
     const isEditing = editingCase === caseItem.id;
     const isCompleted = caseItem.section === 'completed';
 
-    if (!isEditing || isCompleted) {
+    if (!isEditing) {
       return <span className="font-medium">{value}</span>;
+    }
+
+    // Allow editing completed cases, but show them in green
+    if (isCompleted) {
+      return <span className="font-medium text-green-700">{value}</span>;
     }
 
     if (field === 'outcome') {
@@ -490,7 +493,7 @@ export default function CasesTable({
       {sectionOrder.map(section => {
         const sectionCases = groupedCases[section] || [];
         // Always show these sections even if empty
-        const alwaysVisibleSections = ['new_referral', 'awaiting_surgery', 'completed', 'on_list', 'hip_and_knee', 'foot_and_ankle', 'shoulder_and_elbow', 'hand', 'onward_referrals'];
+        const alwaysVisibleSections = ['new_referral', 'awaiting_surgery', 'completed', 'hip_and_knee', 'foot_and_ankle', 'shoulder_and_elbow', 'hand', 'onward_referrals'];
         if (sectionCases.length === 0 && !isAddingNew && !alwaysVisibleSections.includes(section)) return null;
 
         return (
@@ -600,15 +603,13 @@ export default function CasesTable({
                             </>
                           ) : (
                             <>
-                              {section !== 'completed' && (
-                                <button
-                                  onClick={() => handleEdit(caseItem.id, caseItem)}
-                                  className="text-blue-600 hover:text-blue-900"
-                                  title="Edit"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </button>
-                              )}
+                              <button
+                                onClick={() => handleEdit(caseItem.id, caseItem)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Edit"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
                               {section !== 'completed' && (
                                 <button
                                   onClick={() => handleComplete(caseItem.id)}
