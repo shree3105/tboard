@@ -195,7 +195,7 @@ export default function TraumaBoard() {
         order_index: cases.filter(c => c.section === 'new_referral').length + 1,
         surgery_date: caseData.surgery_date || null,
         hospital_number: caseData.hospital_number || '',
-        referral_date: caseData.referral_date,
+        referral_date: caseData.referral_date || null,
         age: caseData.age || 0,
         gender: caseData.gender || '',
         consultant: caseData.consultant || '',
@@ -282,7 +282,7 @@ export default function TraumaBoard() {
     if (!draggedCase) return;
 
     try {
-      const updates = {
+      const updates: Partial<Case> = {
         surgery_date: date,
         section: 'on_list' as const,
       };
@@ -311,7 +311,7 @@ export default function TraumaBoard() {
 
   const handleDropOnDate = async (caseId: string, date: string) => {
     try {
-      const updates = {
+      const updates: Partial<Case> = {
         surgery_date: date,
         section: 'on_list' as const,
       };

@@ -88,6 +88,7 @@ export interface CasesFilters {
   age_max?: number;
   gender?: string;
   consultant?: string;
+  id?: string; // Add support for filtering by ID
 }
 
 export interface WebSocketMessage {

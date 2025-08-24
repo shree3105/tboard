@@ -101,7 +101,7 @@ export const auth = {
         
         if (now - loginTime > sessionTimeout) {
           console.warn('Session expired');
-          this.logout();
+          auth.logout();
           return false;
         }
       }

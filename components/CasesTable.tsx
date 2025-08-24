@@ -336,7 +336,7 @@ export default function CasesTable({
     if (field === 'name' || field === 'diagnosis' || field === 'hospital_number' || field === 'consultant') {
       return (
         <textarea
-          value={editingData[field as keyof typeof editingData] || value}
+          value={(editingData[field as keyof typeof editingData] as string) || value}
           onChange={(e) => setEditingData({ ...editingData, [field]: e.target.value })}
           className="input-field text-sm min-h-[1.5rem] resize-y"
           rows={1}
@@ -348,7 +348,7 @@ export default function CasesTable({
       return (
         <input
           type="number"
-          value={editingData.age || value}
+          value={editingData.age?.toString() || value}
           onChange={(e) => setEditingData({ ...editingData, age: parseInt(e.target.value) || 0 })}
           className="input-field text-sm"
           min="0"
@@ -362,7 +362,7 @@ export default function CasesTable({
         <input
           type="date"
           value={editingData.referral_date || value || ''}
-          onChange={(e) => setEditingData({ ...editingData, referral_date: e.target.value })}
+          onChange={(e) => setEditingData({ ...editingData, referral_date: e.target.value || null })}
           className="input-field text-sm"
         />
       );
@@ -401,14 +401,14 @@ export default function CasesTable({
           <input
             type="date"
             value={newCaseData.referral_date || ''}
-            onChange={(e) => setNewCaseData({ ...newCaseData, referral_date: e.target.value })}
+            onChange={(e) => setNewCaseData({ ...newCaseData, referral_date: e.target.value || null })}
             className="input-field text-sm"
           />
         </td>
         <td className="table-cell">
           <input
             type="number"
-            value={newCaseData.age || ''}
+            value={newCaseData.age?.toString() || ''}
             onChange={(e) => setNewCaseData({ ...newCaseData, age: parseInt(e.target.value) || 0 })}
             className="input-field text-sm"
             placeholder="Age"
