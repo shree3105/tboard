@@ -31,12 +31,24 @@ export default function CasesTable({
     diagnosis?: string;
     outcome?: string;
     section?: string;
+    hospital_number?: string;
+    referral_date?: string;
+    age?: number;
+    gender?: string;
+    consultant?: string;
+    history?: string;
   }>({});
   const [newCaseData, setNewCaseData] = useState<Partial<Case>>({
     name: '',
     diagnosis: '',
     outcome: 'Pending',
-    section: 'new_referral'
+    section: 'new_referral',
+    hospital_number: '',
+    referral_date: undefined,
+    age: 0,
+    gender: '',
+    consultant: '',
+    history: ''
   });
   const [isAddingNew, setIsAddingNew] = useState(false);
 
@@ -74,7 +86,7 @@ export default function CasesTable({
   });
 
   // Define section order for table
-  const sectionOrder = ['new_referral', 'awaiting_surgery', 'completed'];
+  const sectionOrder = ['new_referral', 'awaiting_surgery', 'hip_and_knee', 'foot_and_ankle', 'shoulder_and_elbow', 'hand', 'onward_referrals', 'completed'];
 
   const getSectionTitle = (section: string) => {
     switch (section) {
@@ -84,6 +96,18 @@ export default function CasesTable({
         return 'Awaiting Surgery';
       case 'completed':
         return 'Completed';
+      case 'on_list':
+        return 'On List';
+      case 'hip_and_knee':
+        return 'Hip and Knee';
+      case 'foot_and_ankle':
+        return 'Foot and Ankle';
+      case 'shoulder_and_elbow':
+        return 'Shoulder and Elbow';
+      case 'hand':
+        return 'Hand';
+      case 'onward_referrals':
+        return 'Onward Referrals';
       default:
         return section.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
@@ -97,6 +121,18 @@ export default function CasesTable({
         return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'completed':
         return 'bg-green-100 text-green-800 border-green-200';
+      case 'on_list':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'hip_and_knee':
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      case 'foot_and_ankle':
+        return 'bg-pink-100 text-pink-800 border-pink-200';
+      case 'shoulder_and_elbow':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'hand':
+        return 'bg-teal-100 text-teal-800 border-teal-200';
+      case 'onward_referrals':
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -108,7 +144,13 @@ export default function CasesTable({
       name: caseItem.name,
       diagnosis: caseItem.diagnosis,
       outcome: caseItem.outcome,
-      section: caseItem.section
+      section: caseItem.section,
+      hospital_number: caseItem.hospital_number,
+      referral_date: caseItem.referral_date || undefined,
+      age: caseItem.age,
+      gender: caseItem.gender,
+      consultant: caseItem.consultant,
+      history: caseItem.history
     });
   };
 
@@ -143,12 +185,18 @@ export default function CasesTable({
       name: '',
       diagnosis: '',
       outcome: 'Pending',
-      section: 'new_referral'
+      section: 'new_referral',
+      hospital_number: '',
+      referral_date: undefined,
+      age: 0,
+      gender: '',
+      consultant: '',
+      history: ''
     });
   };
 
   const handleSaveNewCase = async () => {
-    if (newCaseData.name && newCaseData.diagnosis) {
+    if (newCaseData.name && newCaseData.diagnosis && newCaseData.hospital_number) {
       // Create a new case with the current data
       const createData = {
         name: newCaseData.name,
@@ -156,7 +204,13 @@ export default function CasesTable({
         outcome: newCaseData.outcome || 'Pending',
         section: 'new_referral',
         order_index: cases.filter(c => c.section === 'new_referral').length + 1,
-        surgery_date: undefined
+        surgery_date: undefined,
+        hospital_number: newCaseData.hospital_number,
+        referral_date: newCaseData.referral_date,
+        age: newCaseData.age || 0,
+        gender: newCaseData.gender || '',
+        consultant: newCaseData.consultant || '',
+        history: newCaseData.history || ''
       };
       
       // Call the parent's create function
@@ -166,7 +220,13 @@ export default function CasesTable({
         name: '',
         diagnosis: '',
         outcome: 'Pending',
-        section: 'new_referral'
+        section: 'new_referral',
+        hospital_number: '',
+        referral_date: undefined,
+        age: 0,
+        gender: '',
+        consultant: '',
+        history: ''
       });
     }
   };
@@ -177,7 +237,13 @@ export default function CasesTable({
       name: '',
       diagnosis: '',
       outcome: 'Pending',
-      section: 'new_referral'
+      section: 'new_referral',
+      hospital_number: '',
+      referral_date: undefined,
+      age: 0,
+      gender: '',
+      consultant: '',
+      history: ''
     });
   };
 
@@ -215,11 +281,11 @@ export default function CasesTable({
 
     if (field === 'outcome') {
       return (
-        <input
-          type="text"
+        <textarea
           value={editingData.outcome || value}
           onChange={(e) => setEditingData({ ...editingData, outcome: e.target.value })}
-          className="input-field text-sm"
+          className="input-field text-sm min-h-[1.5rem] resize-y"
+          rows={1}
         />
       );
     }
@@ -233,16 +299,70 @@ export default function CasesTable({
         >
           <option value="new_referral">New Referrals</option>
           <option value="awaiting_surgery">Awaiting Surgery</option>
+          <option value="hip_and_knee">Hip and Knee</option>
+          <option value="foot_and_ankle">Foot and Ankle</option>
+          <option value="shoulder_and_elbow">Shoulder and Elbow</option>
+          <option value="hand">Hand</option>
+          <option value="onward_referrals">Onward Referrals</option>
         </select>
       );
     }
 
-    if (field === 'name' || field === 'diagnosis') {
+    if (field === 'gender') {
+      return (
+        <select
+          value={editingData.gender || value}
+          onChange={(e) => setEditingData({ ...editingData, gender: e.target.value })}
+          className="input-field text-sm"
+        >
+          <option value="">Select...</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      );
+    }
+
+    if (field === 'history') {
+      return (
+        <textarea
+          value={editingData.history || value}
+          onChange={(e) => setEditingData({ ...editingData, history: e.target.value })}
+          className="input-field text-sm min-h-[1.5rem] resize-y"
+          rows={2}
+        />
+      );
+    }
+
+    if (field === 'name' || field === 'diagnosis' || field === 'hospital_number' || field === 'consultant') {
+      return (
+        <textarea
+          value={editingData[field as keyof typeof editingData] || value}
+          onChange={(e) => setEditingData({ ...editingData, [field]: e.target.value })}
+          className="input-field text-sm min-h-[1.5rem] resize-y"
+          rows={1}
+        />
+      );
+    }
+
+    if (field === 'age') {
       return (
         <input
-          type="text"
-          value={editingData[field] || value}
-          onChange={(e) => setEditingData({ ...editingData, [field]: e.target.value })}
+          type="number"
+          value={editingData.age || value}
+          onChange={(e) => setEditingData({ ...editingData, age: parseInt(e.target.value) || 0 })}
+          className="input-field text-sm"
+          min="0"
+          max="120"
+        />
+      );
+    }
+
+    if (field === 'referral_date') {
+      return (
+        <input
+          type="date"
+          value={editingData.referral_date || value || ''}
+          onChange={(e) => setEditingData({ ...editingData, referral_date: e.target.value })}
           className="input-field text-sm"
         />
       );
@@ -260,34 +380,89 @@ export default function CasesTable({
           <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />
         </td>
         <td className="table-cell">
-          <input
-            type="text"
+          <textarea
             value={newCaseData.name || ''}
             onChange={(e) => setNewCaseData({ ...newCaseData, name: e.target.value })}
-            className="input-field text-sm"
+            className="input-field text-sm min-h-[1.5rem] resize-y"
             placeholder="Patient name"
+            rows={1}
+          />
+        </td>
+        <td className="table-cell">
+          <textarea
+            value={newCaseData.hospital_number || ''}
+            onChange={(e) => setNewCaseData({ ...newCaseData, hospital_number: e.target.value })}
+            className="input-field text-sm min-h-[1.5rem] resize-y"
+            placeholder="Hospital number"
+            rows={1}
           />
         </td>
         <td className="table-cell">
           <input
-            type="text"
+            type="date"
+            value={newCaseData.referral_date || ''}
+            onChange={(e) => setNewCaseData({ ...newCaseData, referral_date: e.target.value })}
+            className="input-field text-sm"
+          />
+        </td>
+        <td className="table-cell">
+          <input
+            type="number"
+            value={newCaseData.age || ''}
+            onChange={(e) => setNewCaseData({ ...newCaseData, age: parseInt(e.target.value) || 0 })}
+            className="input-field text-sm"
+            placeholder="Age"
+            min="0"
+            max="120"
+          />
+        </td>
+        <td className="table-cell">
+          <select
+            value={newCaseData.gender || ''}
+            onChange={(e) => setNewCaseData({ ...newCaseData, gender: e.target.value })}
+            className="input-field text-sm"
+          >
+            <option value="">Select...</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </td>
+        <td className="table-cell">
+          <textarea
+            value={newCaseData.consultant || ''}
+            onChange={(e) => setNewCaseData({ ...newCaseData, consultant: e.target.value })}
+            className="input-field text-sm min-h-[1.5rem] resize-y"
+            placeholder="Consultant"
+            rows={1}
+          />
+        </td>
+        <td className="table-cell">
+          <textarea
             value={newCaseData.diagnosis || ''}
             onChange={(e) => setNewCaseData({ ...newCaseData, diagnosis: e.target.value })}
-            className="input-field text-sm"
+            className="input-field text-sm min-h-[1.5rem] resize-y"
             placeholder="Diagnosis"
+            rows={1}
           />
         </td>
         <td className="table-cell">
-          <input
-            type="text"
-            value={newCaseData.outcome || 'Pending'}
-            onChange={(e) => setNewCaseData({ ...newCaseData, outcome: e.target.value })}
-            className="input-field text-sm"
-            placeholder="Outcome"
+          <textarea
+            value={newCaseData.history || ''}
+            onChange={(e) => setNewCaseData({ ...newCaseData, history: e.target.value })}
+            className="input-field text-sm min-h-[1.5rem] resize-y"
+            placeholder="History"
+            rows={1}
           />
         </td>
-
-        <td className="table-cell">-</td>
+        <td className="table-cell">
+          <textarea
+            value={newCaseData.outcome || 'Pending'}
+            onChange={(e) => setNewCaseData({ ...newCaseData, outcome: e.target.value })}
+            className="input-field text-sm min-h-[1.5rem] resize-y"
+            placeholder="Outcome"
+            rows={1}
+          />
+        </td>
         <td className="table-cell">
           <div className="flex space-x-2">
             <button
@@ -314,13 +489,14 @@ export default function CasesTable({
     <div className="overflow-x-auto">
       {sectionOrder.map(section => {
         const sectionCases = groupedCases[section] || [];
-        // Always show new_referral section, hide others if empty and not adding new
-        if (sectionCases.length === 0 && !isAddingNew && section !== 'new_referral') return null;
+        // Always show these sections even if empty
+        const alwaysVisibleSections = ['new_referral', 'awaiting_surgery', 'completed', 'on_list', 'hip_and_knee', 'foot_and_ankle', 'shoulder_and_elbow', 'hand', 'onward_referrals'];
+        if (sectionCases.length === 0 && !isAddingNew && !alwaysVisibleSections.includes(section)) return null;
 
         return (
-          <div key={section} className="mb-6">
+          <div key={section} className="mb-4">
             {/* Section Header */}
-            <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
               <div className="flex justify-between items-center">
                 <h3 className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full border ${getSectionColor(section)}`}>
                   {getSectionTitle(section)} ({sectionCases.length})
@@ -346,9 +522,14 @@ export default function CasesTable({
                   <tr>
                     <th className="table-header w-8"></th>
                     <th className="table-header">Name</th>
+                    <th className="table-header">Hospital Number</th>
+                    <th className="table-header">Referral Date</th>
+                    <th className="table-header">Age</th>
+                    <th className="table-header">Gender</th>
+                    <th className="table-header">Consultant</th>
                     <th className="table-header">Diagnosis</th>
+                    <th className="table-header">History</th>
                     <th className="table-header">Outcome</th>
-                    <th className="table-header">Surgery Date</th>
                     <th className="table-header">Actions</th>
                   </tr>
                 </thead>
@@ -373,14 +554,30 @@ export default function CasesTable({
                         {renderEditableCell(caseItem, 'name', caseItem.name)}
                       </td>
                       <td className="table-cell">
+                        {renderEditableCell(caseItem, 'hospital_number', caseItem.hospital_number)}
+                      </td>
+                      <td className="table-cell">
+                        {renderEditableCell(caseItem, 'referral_date', caseItem.referral_date ? new Date(caseItem.referral_date).toLocaleDateString() : '-')}
+                      </td>
+                      <td className="table-cell">
+                        {renderEditableCell(caseItem, 'age', caseItem.age.toString())}
+                      </td>
+                      <td className="table-cell">
+                        {renderEditableCell(caseItem, 'gender', caseItem.gender)}
+                      </td>
+                      <td className="table-cell">
+                        {renderEditableCell(caseItem, 'consultant', caseItem.consultant)}
+                      </td>
+                      <td className="table-cell">
                         {renderEditableCell(caseItem, 'diagnosis', caseItem.diagnosis)}
                       </td>
                       <td className="table-cell">
-                        {renderEditableCell(caseItem, 'outcome', caseItem.outcome)}
+                        <div className="max-w-xs truncate" title={caseItem.history}>
+                          {renderEditableCell(caseItem, 'history', caseItem.history)}
+                        </div>
                       </td>
-
                       <td className="table-cell">
-                        {caseItem.surgery_date ? new Date(caseItem.surgery_date).toLocaleDateString() : '-'}
+                        {renderEditableCell(caseItem, 'outcome', caseItem.outcome)}
                       </td>
                       <td className="table-cell">
                         <div className="flex space-x-2">

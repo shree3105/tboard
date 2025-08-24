@@ -176,10 +176,7 @@ export default function TraumaBoard() {
     }
   }, []);
 
-  // Fetch archived cases when component mounts
-  useEffect(() => {
-    fetchArchivedCases();
-  }, []);
+
 
   const handleLogout = () => {
     if (wsClient) {
@@ -413,7 +410,7 @@ export default function TraumaBoard() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-2 sm:px-4 lg:px-6">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <h1 className="text-xl font-bold text-primary-600">Trauma Board</h1>
@@ -430,7 +427,7 @@ export default function TraumaBoard() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="w-full px-2 sm:px-4 lg:px-6 py-4">
         {/* Tab Navigation */}
         <div className="mb-6">
           <div className="border-b border-gray-200">
@@ -465,8 +462,8 @@ export default function TraumaBoard() {
         {activeTab === 'main' ? (
           <>
             {/* Cases Table */}
-            <div className="bg-white shadow rounded-lg mb-6">
-              <div className="px-6 py-4 border-b border-gray-200">
+            <div className="bg-white shadow rounded-lg mb-4">
+              <div className="px-4 py-4 border-b border-gray-200">
                 <div className="flex justify-between items-center">
                   <h2 className="text-lg font-semibold text-gray-900">Cases by Section</h2>
                 </div>
@@ -486,7 +483,7 @@ export default function TraumaBoard() {
 
             {/* Horizontal Calendar */}
             <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-4 border-b border-gray-200">
+              <div className="px-4 py-4 border-b border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-900">Surgery Schedule</h2>
               </div>
               <HorizontalCalendar

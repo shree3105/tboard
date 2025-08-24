@@ -30,6 +30,18 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
         return 'Awaiting Surgery';
       case 'completed':
         return 'Completed';
+      case 'on_list':
+        return 'On List';
+      case 'hip_and_knee':
+        return 'Hip and Knee';
+      case 'foot_and_ankle':
+        return 'Foot and Ankle';
+      case 'shoulder_and_elbow':
+        return 'Shoulder and Elbow';
+      case 'hand':
+        return 'Hand';
+      case 'onward_referrals':
+        return 'Onward Referrals';
       default:
         return section.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
@@ -43,6 +55,18 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
         return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'completed':
         return 'bg-green-100 text-green-800 border-green-200';
+      case 'on_list':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'hip_and_knee':
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      case 'foot_and_ankle':
+        return 'bg-pink-100 text-pink-800 border-pink-200';
+      case 'shoulder_and_elbow':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'hand':
+        return 'bg-teal-100 text-teal-800 border-teal-200';
+      case 'onward_referrals':
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -67,19 +91,24 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
   }
 
   return (
-    <div className="overflow-x-auto">
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Archived Cases ({archivedCases.length})</h2>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+    <div className="bg-white shadow rounded-lg">
+      <div className="px-4 py-4 border-b border-gray-200">
+        <h2 className="text-lg font-semibold text-gray-900">Archived Cases ({archivedCases.length})</h2>
+      </div>
+      
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="table-header">Name</th>
+                <th className="table-header">Hospital Number</th>
                 <th className="table-header">Diagnosis</th>
                 <th className="table-header">Outcome</th>
+                <th className="table-header">Referral Date</th>
+                <th className="table-header">Age</th>
+                <th className="table-header">Gender</th>
+                <th className="table-header">Consultant</th>
+                <th className="table-header">History</th>
                 <th className="table-header">Section</th>
                 <th className="table-header">Surgery Date</th>
                 <th className="table-header">Archived Date</th>
@@ -90,6 +119,7 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
               {archivedCases.map((caseItem) => (
                 <tr key={caseItem.id} className="hover:bg-gray-50">
                   <td className="table-cell font-medium">{caseItem.name}</td>
+                  <td className="table-cell">{caseItem.hospital_number}</td>
                   <td className="table-cell">{caseItem.diagnosis}</td>
                   <td className="table-cell">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -100,6 +130,17 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
                     }`}>
                       {caseItem.outcome}
                     </span>
+                  </td>
+                  <td className="table-cell">
+                    {caseItem.referral_date ? new Date(caseItem.referral_date).toLocaleDateString() : '-'}
+                  </td>
+                  <td className="table-cell">{caseItem.age}</td>
+                  <td className="table-cell">{caseItem.gender}</td>
+                  <td className="table-cell">{caseItem.consultant}</td>
+                  <td className="table-cell">
+                    <div className="max-w-xs truncate" title={caseItem.history}>
+                      {caseItem.history}
+                    </div>
                   </td>
                   <td className="table-cell">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getSectionColor(caseItem.section)}`}>
@@ -129,6 +170,5 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
           </table>
         </div>
       </div>
-    </div>
-  );
+    );
 }

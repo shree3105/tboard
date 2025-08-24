@@ -266,6 +266,7 @@ export default function HorizontalCalendar({
                         <GripVertical className="h-3 w-3 text-orange-600 flex-shrink-0" />
                         <div className="flex-1 ml-1 min-w-0">
                           <div className="font-medium truncate">{caseItem.name}</div>
+                          <div className="text-xs opacity-75 truncate">#{caseItem.hospital_number}</div>
                           <div className="text-xs opacity-75 truncate">{caseItem.diagnosis}</div>
                         </div>
                         <button

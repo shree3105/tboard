@@ -15,6 +15,13 @@ export interface Case {
   archived: boolean;
   created_at: string;
   updated_at: string;
+  // Newly added columns
+  hospital_number: string;
+  referral_date: string | null;
+  age: number;
+  gender: string;
+  consultant: string;
+  history: string;
 }
 
 export interface LoginRequest {
@@ -39,6 +46,13 @@ export interface CreateCaseRequest {
   section: string;
   surgery_date?: string;
   order_index: number;
+  // Newly added columns
+  hospital_number: string;
+  referral_date?: string;
+  age: number;
+  gender: string;
+  consultant: string;
+  history: string;
 }
 
 export interface UpdateCaseRequest {
@@ -49,6 +63,13 @@ export interface UpdateCaseRequest {
   surgery_date?: string | null;
   order_index?: number;
   archived?: boolean;
+  // Newly added columns
+  hospital_number?: string;
+  referral_date?: string | null;
+  age?: number;
+  gender?: string;
+  consultant?: string;
+  history?: string;
 }
 
 export interface CasesFilters {
@@ -59,6 +80,14 @@ export interface CasesFilters {
   surgery_date_from?: string;
   surgery_date_to?: string;
   archived?: boolean;
+  // Newly added columns for filtering
+  hospital_number?: string;
+  referral_date_from?: string;
+  referral_date_to?: string;
+  age_min?: number;
+  age_max?: number;
+  gender?: string;
+  consultant?: string;
 }
 
 export interface WebSocketMessage {
