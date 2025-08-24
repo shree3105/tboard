@@ -193,7 +193,7 @@ export default function TraumaBoard() {
         outcome: caseData.outcome || 'Pending',
         section: 'new_referral',
         order_index: cases.filter(c => c.section === 'new_referral').length + 1,
-        surgery_date: caseData.surgery_date || undefined,
+        surgery_date: caseData.surgery_date || null,
         hospital_number: caseData.hospital_number || '',
         referral_date: caseData.referral_date,
         age: caseData.age || 0,

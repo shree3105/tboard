@@ -44,11 +44,11 @@ export interface CreateCaseRequest {
   diagnosis: string;
   outcome: string;
   section: string;
-  surgery_date?: string;
+  surgery_date?: string | null;
   order_index: number;
   // Newly added columns
   hospital_number: string;
-  referral_date?: string;
+  referral_date?: string | null;
   age: number;
   gender: string;
   consultant: string;

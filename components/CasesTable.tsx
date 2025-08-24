@@ -32,7 +32,7 @@ export default function CasesTable({
     outcome?: string;
     section?: string;
     hospital_number?: string;
-    referral_date?: string;
+    referral_date?: string | null;
     age?: number;
     gender?: string;
     consultant?: string;
@@ -44,7 +44,7 @@ export default function CasesTable({
     outcome: 'Pending',
     section: 'new_referral',
     hospital_number: '',
-    referral_date: undefined,
+    referral_date: null,
     age: 0,
     gender: '',
     consultant: '',
@@ -146,7 +146,7 @@ export default function CasesTable({
       outcome: caseItem.outcome,
       section: caseItem.section,
       hospital_number: caseItem.hospital_number,
-      referral_date: caseItem.referral_date || undefined,
+      referral_date: caseItem.referral_date,
       age: caseItem.age,
       gender: caseItem.gender,
       consultant: caseItem.consultant,
@@ -187,7 +187,7 @@ export default function CasesTable({
       outcome: 'Pending',
       section: 'new_referral',
       hospital_number: '',
-      referral_date: undefined,
+      referral_date: null,
       age: 0,
       gender: '',
       consultant: '',
@@ -204,7 +204,7 @@ export default function CasesTable({
         outcome: newCaseData.outcome || 'Pending',
         section: 'new_referral',
         order_index: cases.filter(c => c.section === 'new_referral').length + 1,
-        surgery_date: undefined,
+        surgery_date: null,
         hospital_number: newCaseData.hospital_number,
         referral_date: newCaseData.referral_date,
         age: newCaseData.age || 0,
@@ -222,7 +222,7 @@ export default function CasesTable({
         outcome: 'Pending',
         section: 'new_referral',
         hospital_number: '',
-        referral_date: undefined,
+        referral_date: null,
         age: 0,
         gender: '',
         consultant: '',
@@ -239,7 +239,7 @@ export default function CasesTable({
       outcome: 'Pending',
       section: 'new_referral',
       hospital_number: '',
-      referral_date: undefined,
+      referral_date: null,
       age: 0,
       gender: '',
       consultant: '',
