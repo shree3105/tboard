@@ -22,7 +22,9 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
     }
   };
 
-  const getSectionTitle = (section: string) => {
+  const getSectionTitle = (section: string | null) => {
+    if (!section) return 'Unknown';
+    
     switch (section) {
       case 'new_referral':
         return 'New Referrals';
@@ -47,7 +49,9 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
     }
   };
 
-  const getSectionColor = (section: string) => {
+  const getSectionColor = (section: string | null) => {
+    if (!section) return 'bg-gray-100 text-gray-800 border-gray-200';
+    
     switch (section) {
       case 'new_referral':
         return 'bg-purple-100 text-purple-800 border-purple-200';
@@ -109,7 +113,7 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
                 <th className="table-header">Gender</th>
                 <th className="table-header">Consultant</th>
                 <th className="table-header">History</th>
-                <th className="table-header">Section</th>
+                <th className="table-header">Original Section</th>
                 <th className="table-header">Surgery Date</th>
                 <th className="table-header">Archived Date</th>
                 <th className="table-header">Actions</th>
@@ -143,8 +147,8 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
                     </div>
                   </td>
                   <td className="table-cell">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getSectionColor(caseItem.section)}`}>
-                      {getSectionTitle(caseItem.section)}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getSectionColor(caseItem.original_section || caseItem.section)}`}>
+                      {getSectionTitle(caseItem.original_section || caseItem.section)}
                     </span>
                   </td>
                   <td className="table-cell">

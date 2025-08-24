@@ -329,21 +329,7 @@ export default function HorizontalCalendar({
         })}
       </div>
 
-      {/* Legend */}
-      <div className="mt-4 flex justify-center space-x-6 text-xs">
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-purple-100 border border-purple-200 rounded"></div>
-          <span>New Referral</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-orange-100 border border-orange-200 rounded"></div>
-          <span>Scheduled Surgery</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
-          <span>Completed</span>
-        </div>
-      </div>
+
     </div>
   );
 }

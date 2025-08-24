@@ -293,7 +293,8 @@ export default function TraumaBoard() {
         age: caseData.age || 0,
         gender: caseData.gender || '',
         consultant: caseData.consultant || '',
-        history: caseData.history || ''
+        history: caseData.history || '',
+        original_section: null // Start with null, will be set when moved to body part section
       });
       setCases(prev => [...prev, newCase]);
       setCalendarCases(prev => [...prev, newCase]);
@@ -362,7 +363,7 @@ export default function TraumaBoard() {
 
       const updatedCase = await casesAPI.updateCase(caseId, {
         section: 'completed'
-        // Don't change outcome or surgery_date
+        // Don't change outcome, surgery_date, or original_section
       });
       
       // Update with server response
@@ -392,6 +393,12 @@ export default function TraumaBoard() {
         surgery_date: date,
         section: 'on_list' as const,
       };
+
+      // Set original_section if the case doesn't have one yet and is coming from a body part section
+      const bodyPartSections = ['hip_and_knee', 'foot_and_ankle', 'shoulder_and_elbow', 'hand', 'onward_referrals'];
+      if (!draggedCase.original_section && bodyPartSections.includes(draggedCase.section)) {
+        updates.original_section = draggedCase.section;
+      }
       
       await handleUpdateCase(draggedCase.id, updates);
       setDraggedCase(null);
@@ -403,10 +410,20 @@ export default function TraumaBoard() {
 
   const handleDropOnSection = async (caseId: string, newSection: string) => {
     try {
+      // Get the current case to check if we need to update original_section
+      const currentCase = cases.find(c => c.id === caseId);
+      if (!currentCase) return;
+
       const updates: Partial<Case> = {
         section: newSection === 'awaiting_surgery' ? 'on_list' : newSection,
         surgery_date: null // Remove surgery date when moving back to table
       };
+
+      // Set original_section if moving to a body part section (not completed, on_list, or new_referral)
+      const bodyPartSections = ['hip_and_knee', 'foot_and_ankle', 'shoulder_and_elbow', 'hand', 'onward_referrals'];
+      if (bodyPartSections.includes(newSection)) {
+        updates.original_section = newSection;
+      }
       
       await handleUpdateCase(caseId, updates);
       toast.success(`Case moved to ${newSection === 'awaiting_surgery' ? 'Awaiting Surgery' : 'New Referrals'}`);

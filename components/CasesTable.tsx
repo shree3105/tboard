@@ -48,7 +48,8 @@ export default function CasesTable({
     age: 0,
     gender: '',
     consultant: '',
-    history: ''
+    history: '',
+    original_section: null
   });
   const [isAddingNew, setIsAddingNew] = useState(false);
 
@@ -189,7 +190,8 @@ export default function CasesTable({
       age: 0,
       gender: '',
       consultant: '',
-      history: ''
+      history: '',
+      original_section: null
     });
   };
 
@@ -208,7 +210,8 @@ export default function CasesTable({
         age: newCaseData.age || 0,
         gender: newCaseData.gender || '',
         consultant: newCaseData.consultant || '',
-        history: newCaseData.history || ''
+        history: newCaseData.history || '',
+        original_section: null
       };
       
       // Call the parent's create function
@@ -224,7 +227,8 @@ export default function CasesTable({
         age: 0,
         gender: '',
         consultant: '',
-        history: ''
+        history: '',
+        original_section: null
       });
     }
   };
@@ -241,7 +245,8 @@ export default function CasesTable({
       age: 0,
       gender: '',
       consultant: '',
-      history: ''
+      history: '',
+      original_section: null
     });
   };
 

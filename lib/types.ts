@@ -22,6 +22,7 @@ export interface Case {
   gender: string;
   consultant: string;
   history: string;
+  original_section: string | null;
 }
 
 export interface LoginRequest {
@@ -53,6 +54,7 @@ export interface CreateCaseRequest {
   gender: string;
   consultant: string;
   history: string;
+  original_section?: string | null;
 }
 
 export interface UpdateCaseRequest {
@@ -70,6 +72,7 @@ export interface UpdateCaseRequest {
   gender?: string;
   consultant?: string;
   history?: string;
+  original_section?: string | null;
 }
 
 export interface CasesFilters {
