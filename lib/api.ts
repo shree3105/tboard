@@ -20,6 +20,8 @@ const api = axios.create({
   },
   // Enable credentials for CORS
   withCredentials: false,
+  // Add timeout for security
+  timeout: 10000,
 });
 
 // Request interceptor to add auth token
@@ -31,18 +33,30 @@ api.interceptors.request.use((config) => {
     }
   }
   return config;
+}, (error) => {
+  console.error('Request interceptor error:', error);
+  return Promise.reject(error);
 });
 
 // Response interceptor to handle auth errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Enhanced error handling
     if (error.response?.status === 401) {
+      console.warn('Authentication failed - redirecting to login');
       if (typeof window !== 'undefined') {
         localStorage.removeItem('access_token');
         window.location.href = '/login';
       }
+    } else if (error.response?.status === 403) {
+      console.error('Access forbidden - insufficient permissions');
+    } else if (error.response?.status >= 500) {
+      console.error('Server error:', error.response.status);
+    } else if (error.code === 'ECONNABORTED') {
+      console.error('Request timeout');
     }
+    
     return Promise.reject(error);
   }
 );
@@ -76,11 +90,7 @@ export const casesAPI = {
     }
     
     const url = `/cases/?${params.toString()}`;
-    console.log('API getCases URL:', url);
-    console.log('API getCases filters:', filters);
-    
     const response = await api.get(url);
-    console.log('API getCases response:', response.data);
     return response.data;
   },
 

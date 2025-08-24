@@ -7,14 +7,21 @@ export class WebSocketClient {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private listeners: ((message: WebSocketMessage) => void)[] = [];
+  private isConnecting = false;
 
   connect(token?: string) {
+    if (this.isConnecting) {
+      console.warn('WebSocket connection already in progress');
+      return;
+    }
+
     const authToken = token || auth.getToken();
     if (!authToken) {
       console.warn('No auth token available for WebSocket connection');
       return;
     }
 
+    this.isConnecting = true;
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'wss://trauma-board-api.onrender.com/ws';
     const url = `${wsUrl}?token=${authToken}`;
 
@@ -22,31 +29,40 @@ export class WebSocketClient {
       this.ws = new WebSocket(url);
 
       this.ws.onopen = () => {
-        console.log('WebSocket connected successfully to:', url);
+        console.log('WebSocket connected successfully');
         this.reconnectAttempts = 0;
+        this.isConnecting = false;
       };
 
       this.ws.onmessage = (event) => {
-        console.log('WebSocket raw message received:', event.data);
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
-          console.log('WebSocket parsed message:', message);
           this.notifyListeners(message);
         } catch (error) {
-          console.error('Failed to parse WebSocket message:', error, 'Raw data:', event.data);
+          console.error('Failed to parse WebSocket message:', error);
         }
       };
 
-      this.ws.onclose = () => {
-        console.log('WebSocket disconnected');
+      this.ws.onclose = (event) => {
+        console.log('WebSocket disconnected', event.code, event.reason);
+        this.isConnecting = false;
+        
+        // Don't reconnect if it was a clean close or auth error
+        if (event.code === 1000 || event.code === 1001 || event.code === 1008) {
+          console.log('WebSocket closed cleanly, not reconnecting');
+          return;
+        }
+        
         this.attemptReconnect();
       };
 
       this.ws.onerror = (error) => {
         console.error('WebSocket error:', error);
+        this.isConnecting = false;
       };
     } catch (error) {
       console.error('Failed to create WebSocket connection:', error);
+      this.isConnecting = false;
     }
   }
 
@@ -65,9 +81,10 @@ export class WebSocketClient {
 
   disconnect() {
     if (this.ws) {
-      this.ws.close();
+      this.ws.close(1000, 'Client disconnect');
       this.ws = null;
     }
+    this.isConnecting = false;
   }
 
   onMessage(callback: (message: WebSocketMessage) => void) {
@@ -97,6 +114,10 @@ export class WebSocketClient {
     } else {
       console.warn('WebSocket is not connected');
     }
+  }
+
+  isConnected(): boolean {
+    return this.ws?.readyState === WebSocket.OPEN;
   }
 }
 

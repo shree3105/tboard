@@ -29,9 +29,37 @@ A modern, responsive React.js frontend for the Trauma Board API, built with Next
 - **Loading States**: Smooth user experience with loading indicators
 - **Error Handling**: Graceful error handling with user-friendly messages
 
+## 🔒 **Security Features**
+
+### **Frontend Security**
+- **JWT Token Validation**: Client-side token structure and expiration validation
+- **Automatic Token Management**: Secure token storage and automatic cleanup
+- **Session Management**: 24-hour session timeout with automatic logout
+- **Enhanced Error Handling**: Proper handling of authentication failures
+- **Request Timeouts**: 10-second timeout on all API requests
+- **WebSocket Security**: Authenticated WebSocket connections with reconnection logic
+
+### **Backend Security Requirements**
+The frontend expects the following security measures on your API:
+- ✅ **JWT Token Validation**: Validate tokens on every protected endpoint
+- ✅ **CORS Configuration**: Properly configured for your domain
+- ✅ **Rate Limiting**: Prevent abuse and brute force attacks
+- ✅ **Input Validation**: Validate and sanitize all inputs
+- ✅ **HTTPS**: Secure communication over TLS
+
+### **Environment Configuration**
+```env
+# Required
+NEXT_PUBLIC_API_URL=https://your-api-domain.com
+NEXT_PUBLIC_WS_URL=wss://your-api-domain.com/ws
+
+# Optional
+NEXT_PUBLIC_API_KEY=your_api_key_here
+```
+
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router, SSR)
+- **Framework**: Next.js 14 (App Router, CSR)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Forms**: React Hook Form
