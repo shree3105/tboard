@@ -194,6 +194,12 @@ export default function TraumaBoard() {
         section: 'new_referral',
         order_index: cases.filter(c => c.section === 'new_referral').length + 1,
         surgery_date: caseData.surgery_date || undefined,
+        hospital_number: caseData.hospital_number || '',
+        referral_date: caseData.referral_date,
+        age: caseData.age || 0,
+        gender: caseData.gender || '',
+        consultant: caseData.consultant || '',
+        history: caseData.history || ''
       });
       setCases(prev => [...prev, newCase]);
       toast.success('Case created successfully');
