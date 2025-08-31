@@ -10,11 +10,11 @@ interface ArchivedCasesProps {
 }
 
 export default function ArchivedCases({ cases, onDeleteCase, loading = false }: ArchivedCasesProps) {
-  console.log('ArchivedCases component received cases:', cases);
-  console.log('ArchivedCases component received loading:', loading);
+  // console.log('ArchivedCases component received cases:', cases);
+  // console.log('ArchivedCases component received loading:', loading);
   // Since we're already fetching archived cases from the API, we don't need to filter again
   const archivedCases = cases;
-  console.log('Using cases directly (should already be archived):', archivedCases);
+  // console.log('Using cases directly (should already be archived):', archivedCases);
 
   const handleDelete = async (caseId: string) => {
     if (window.confirm('Are you sure you want to permanently delete this archived case?')) {

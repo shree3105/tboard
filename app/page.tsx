@@ -10,14 +10,14 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log('HomePage: Checking authentication...');
+    // console.log('HomePage: Checking authentication...');
     // Add a small delay to ensure token is properly stored after login
     const checkAuth = () => {
       if (!auth.isAuthenticated()) {
-        console.log('HomePage: Not authenticated, redirecting to login');
+        // console.log('HomePage: Not authenticated, redirecting to login');
         router.push('/login');
       } else {
-        console.log('HomePage: Authenticated, showing TraumaBoard');
+        // console.log('HomePage: Authenticated, showing TraumaBoard');
         setIsLoading(false);
       }
     };

@@ -30,7 +30,7 @@ api.interceptors.request.use((config) => {
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Adding auth token to request:', config.url);
+      // console.log('Adding auth token to request:', config.url);
     } else {
       console.warn('No auth token found for request:', config.url);
     }
@@ -104,10 +104,10 @@ export const casesAPI = {
     }
     
     const url = `/cases/?${params.toString()}`;
-    console.log('Getting cases with URL:', url);
-    const response = await api.get(url);
-    console.log('Get cases response:', response);
-    console.log('Get cases data:', response.data);
+          // console.log('Getting cases with URL:', url);
+      const response = await api.get(url);
+      // console.log('Get cases response:', response);
+      // console.log('Get cases data:', response.data);
     
     // Handle different response structures
     if (response.data && Array.isArray(response.data)) {
@@ -125,8 +125,8 @@ export const casesAPI = {
   // New refresh endpoint for initial data loading
   refreshCases: async (): Promise<Case[]> => {
     const response = await api.get('/cases/refresh');
-    console.log('Refresh cases response:', response);
-    console.log('Refresh cases data:', response.data);
+          // console.log('Refresh cases response:', response);
+      // console.log('Refresh cases data:', response.data);
     
     // Handle different response structures
     if (response.data && Array.isArray(response.data)) {
@@ -141,13 +141,29 @@ export const casesAPI = {
     }
   },
 
+  getCalendarCases: async (weekStart: string, weekEnd: string): Promise<Case[]> => {
+    const response = await api.get(`/cases/calendar/${weekStart}/${weekEnd}`);
+          // console.log('Calendar cases response:', response);
+      // console.log('Calendar cases data:', response.data);
+    
+    // Handle different response structures
+    if (response.data && response.data.cases && Array.isArray(response.data.cases)) {
+      return response.data.cases;
+    } else if (response.data && Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      console.warn('Unexpected calendar response structure:', response.data);
+      return [];
+    }
+  },
+
   createCase: async (caseData: CreateCaseRequest): Promise<Case> => {
     const response = await api.post('/cases/', caseData);
     return response.data;
   },
 
   updateCase: async (caseId: string, caseData: UpdateCaseRequest): Promise<Case> => {
-    console.log('API updateCase called with:', { caseId, caseData });
+    // console.log('API updateCase called with:', { caseId, caseData });
     const response = await api.patch(`/cases/${caseId}`, caseData);
     return response.data;
   },

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { casesAPI } from '@/lib/api';
 import { Case, CasesFilters, WebSocketMessage } from '@/lib/types';
@@ -21,6 +21,29 @@ export default function TraumaBoard() {
   const [draggedCase, setDraggedCase] = useState<Case | null>(null);
   const [wsClient, setWsClient] = useState<WebSocketClient | null>(null);
   const [activeTab, setActiveTab] = useState<'main' | 'archived'>('main');
+  const [currentCalendarWeek, setCurrentCalendarWeek] = useState<{ startDate: Date; endDate: Date }>(() => {
+    // Initialize with the current week (Saturday to Friday)
+    const today = new Date();
+    console.log('TraumaBoard initialization - today:', today.toISOString());
+    console.log('TraumaBoard initialization - today.getDay():', today.getDay());
+    
+    // Calculate the current week (Saturday to Friday)
+    const startOfWeek = new Date(today);
+    // If today is Saturday (6), stay on Saturday. Otherwise, go back to the most recent Saturday
+    const daysSinceSaturday = (today.getDay() + 1) % 7; // Saturday = 0, Sunday = 1, Monday = 2, etc.
+    startOfWeek.setDate(today.getDate() - daysSinceSaturday);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6); // End on Friday
+    
+    console.log('TraumaBoard initialization - calculated startOfWeek:', startOfWeek.toISOString());
+    console.log('TraumaBoard initialization - calculated endOfWeek:', endOfWeek.toISOString());
+    
+    return { startDate: startOfWeek, endDate: endOfWeek };
+  });
+  
+  // Track processed messages to prevent duplicates (disabled - multiple tabs are normal)
+  // const [processedMessages, setProcessedMessages] = useState<Set<string>>(new Set());
 
   // Function to handle tab switching
   const handleTabChange = (tab: 'main' | 'archived') => {
@@ -34,22 +57,22 @@ export default function TraumaBoard() {
   const fetchCases = async () => {
     try {
       setLoading(true);
-      console.log('Fetching main cases (non-archived)...');
+      // console.log('Fetching main cases (non-archived)...');
       
       let data;
       try {
         // Use the new refresh endpoint for better performance
         data = await casesAPI.refreshCases();
-        console.log('Main cases from refresh endpoint:', data);
+        // console.log('Main cases from refresh endpoint:', data);
       } catch (error) {
         console.warn('Refresh endpoint failed, falling back to getCases:', error);
         data = await casesAPI.getCases();
-        console.log('Main cases from getCases:', data);
+        // console.log('Main cases from getCases:', data);
       }
       
       // Filter for non-archived cases on the frontend
       const nonArchivedCases = data.filter(caseItem => caseItem.status !== 'archived');
-      console.log('Main cases API response:', nonArchivedCases);
+      // console.log('Main cases API response:', nonArchivedCases);
       console.log('Number of main cases:', nonArchivedCases.length);
       setCases(nonArchivedCases);
     } catch (error: unknown) {
@@ -63,11 +86,11 @@ export default function TraumaBoard() {
   const fetchArchivedCases = async () => {
     try {
       setArchivedLoading(true);
-      console.log('Fetching archived cases...');
+      // console.log('Fetching archived cases...');
       // Use the refresh endpoint and filter for archived cases
       const allCasesData = await casesAPI.refreshCases();
       const archivedData = allCasesData.filter(caseItem => caseItem.status === 'archived');
-      console.log('Archived cases API response:', archivedData);
+      // console.log('Archived cases API response:', archivedData);
       console.log('Number of archived cases:', archivedData.length);
       setArchivedCases(archivedData);
     } catch (error: unknown) {
@@ -80,7 +103,7 @@ export default function TraumaBoard() {
 
   const fetchCalendarCases = async (startDate?: Date, endDate?: Date) => {
     try {
-      console.log('Fetching calendar cases...', { startDate, endDate });
+      // console.log('Fetching calendar cases...', { startDate, endDate });
       
       // Build filters for the selected week
       const filters: Partial<CasesFilters> = {};
@@ -95,11 +118,11 @@ export default function TraumaBoard() {
         casesAPI.getCases({ ...filters, status: 'archived' })
       ]);
       
-      const combinedData = [...nonArchivedData, ...archivedData];
-      console.log('Calendar cases API response:', combinedData);
-      console.log('Non-archived calendar cases:', nonArchivedData.length);
-      console.log('Archived calendar cases:', archivedData.length);
-      console.log('Total calendar cases:', combinedData.length);
+             const combinedData = [...nonArchivedData, ...archivedData];
+       // console.log('Calendar cases API response:', combinedData);
+       // console.log('Non-archived calendar cases:', nonArchivedData.length);
+       // console.log('Archived calendar cases:', archivedData.length);
+       console.log('Total calendar cases:', combinedData.length);
       
       setCalendarCases(combinedData);
     } catch (error: unknown) {
@@ -117,28 +140,50 @@ export default function TraumaBoard() {
     return { startOfWeek, endOfWeek };
   };
 
-  const handleWeekChange = async (startDate: Date, endDate: Date) => {
-    console.log('Week changed:', { startDate, endDate });
+  const handleWeekChange = useCallback(async (startDate: Date, endDate: Date) => {
+    console.log('TraumaBoard handleWeekChange called with:', {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString()
+    });
+    setCurrentCalendarWeek({ startDate, endDate });
     await fetchCalendarCases(startDate, endDate);
-  };
+  }, []);
 
   const handleWebSocketMessage = async (message: WebSocketMessage) => {
     try {
-      console.log('Processing WebSocket message:', message);
+      // console.log('Processing WebSocket message:', message);
       
-      // Check if this is the new enhanced message format
+      // Create a unique message ID for deduplication (disabled - multiple tabs are normal)
+      // const messageId = `${message.message_type}_${message.action}_${message.case_id}_${message.timestamp}`;
+      
+      // Check if we've already processed this message (disabled)
+      // if (processedMessages.has(messageId)) {
+      //   console.log('Skipping duplicate message:', messageId);
+      //   return;
+      // }
+      
+      // Add to processed messages (disabled)
+      // setProcessedMessages(prev => {
+      //   const newSet = new Set(prev);
+      //   newSet.add(messageId);
+      //   // Keep only last 100 messages to prevent memory leaks
+      //   if (newSet.size > 100) {
+      //     const array = Array.from(newSet);
+      //     return new Set(array.slice(-50));
+      //   }
+      //   return newSet;
+      // });
+      
+      // Handle calendar-specific updates FIRST (they're more specific)
+      if (message.message_type === 'calendar_update') {
+        // console.log('Calendar update received:', message);
+        handleWebSocketCalendarUpdate(message);
+        return;
+      }
+      
+      // Handle case updates normally
       if (message.message_type === 'case_update' && message.case_data) {
-        console.log('Enhanced WebSocket message received with complete case data');
-        
-        // Add timestamp check to prevent processing old messages
-        const messageTimestamp = new Date(message.timestamp).getTime();
-        const now = Date.now();
-        const maxAge = 5 * 60 * 1000; // 5 minutes
-        
-        if (now - messageTimestamp > maxAge) {
-          console.warn('Ignoring old WebSocket message:', message.timestamp);
-          return;
-        }
+        // console.log('Enhanced WebSocket message received with complete case data');
         
         // Add a small delay to prevent race conditions
         await new Promise(resolve => setTimeout(resolve, 50));
@@ -172,6 +217,61 @@ export default function TraumaBoard() {
     }
   };
 
+  const handleWebSocketCalendarUpdate = async (message: WebSocketMessage) => {
+    const currentWeekStart = currentCalendarWeek.startDate.toISOString().split('T')[0];
+    const currentWeekEnd = currentCalendarWeek.endDate.toISOString().split('T')[0];
+    
+    // Check if the case's surgery date falls within our current calendar week
+    const caseSurgeryDate = message.case_data?.surgery_date;
+    const caseDateInCurrentWeek = caseSurgeryDate && 
+      caseSurgeryDate >= currentWeekStart && 
+      caseSurgeryDate <= currentWeekEnd;
+    
+    // Process calendar updates if:
+    // 1. It's for our current week, OR
+    // 2. The case's surgery date is in our current week, OR
+    // 3. It's a remove action (case being moved away from calendar)
+    const shouldProcess = (message.week_start === currentWeekStart && message.week_end === currentWeekEnd) || 
+                         caseDateInCurrentWeek || 
+                         message.action === 'remove';
+    
+
+    
+    if (shouldProcess) {
+      switch (message.action) {
+        case 'add':
+          if (message.case_data && caseDateInCurrentWeek) {
+            setCalendarCases(prev => {
+              const exists = prev.some(c => c.id === message.case_id);
+              return exists 
+                ? prev.map(c => c.id === message.case_id ? message.case_data : c)
+                : [...prev, message.case_data];
+            });
+          }
+          break;
+        case 'update':
+          if (message.case_data) {
+            if (caseDateInCurrentWeek) {
+              setCalendarCases(prev => {
+                const exists = prev.some(c => c.id === message.case_id);
+                return exists 
+                  ? prev.map(c => c.id === message.case_id ? message.case_data : c)
+                  : [...prev, message.case_data];
+              });
+            } else {
+              setCalendarCases(prev => prev.filter(c => c.id !== message.case_id));
+            }
+          }
+          break;
+        case 'remove':
+          setCalendarCases(prev => prev.filter(c => c.id !== message.case_id));
+          break;
+        default:
+          await fetchCalendarCases(currentCalendarWeek.startDate, currentCalendarWeek.endDate);
+      }
+    }
+  };
+
 
 
   const handleWebSocketDelete = (caseId: string) => {
@@ -199,9 +299,8 @@ export default function TraumaBoard() {
       
       // Add to calendar if it has a surgery date in current week
       if (newCase.surgery_date) {
-        const { startOfWeek, endOfWeek } = getCurrentWeekDates();
-        const startDateStr = startOfWeek.toISOString().split('T')[0];
-        const endDateStr = endOfWeek.toISOString().split('T')[0];
+        const startDateStr = currentCalendarWeek.startDate.toISOString().split('T')[0];
+        const endDateStr = currentCalendarWeek.endDate.toISOString().split('T')[0];
         
         if (newCase.surgery_date >= startDateStr && newCase.surgery_date <= endDateStr) {
           setCalendarCases(prev => {
@@ -246,10 +345,9 @@ export default function TraumaBoard() {
     setCalendarCases(prev => {
       const exists = prev.some(c => c.id === updatedCase.id);
       if (updatedCase.surgery_date) {
-        // Check if surgery date is in current week
-        const { startOfWeek, endOfWeek } = getCurrentWeekDates();
-        const startDateStr = startOfWeek.toISOString().split('T')[0];
-        const endDateStr = endOfWeek.toISOString().split('T')[0];
+        // Check if surgery date is in the calendar's current week (not today's week)
+        const startDateStr = currentCalendarWeek.startDate.toISOString().split('T')[0];
+        const endDateStr = currentCalendarWeek.endDate.toISOString().split('T')[0];
         
         if (updatedCase.surgery_date >= startDateStr && updatedCase.surgery_date <= endDateStr) {
           // Add or update in calendar
@@ -335,10 +433,13 @@ export default function TraumaBoard() {
         
         // Add connection status logging
         ws.onMessage((message) => {
-          console.log('TraumaBoard received WebSocket message:', message);
-          console.log('Message type:', message.message_type);
-          console.log('Message action:', message.action);
-          console.log('Case data present:', !!message.case_data);
+          console.log(`[${new Date().toISOString()}] TraumaBoard received WebSocket message:`, {
+            type: message.message_type,
+            action: message.action,
+            case_id: message.case_id,
+            has_case_data: !!message.case_data,
+            changed_fields: message.changed_fields
+          });
           handleWebSocketMessage(message);
         });
         
@@ -606,16 +707,24 @@ export default function TraumaBoard() {
 
   const handleReorderCases = async (caseId: string, targetDate: string, newOrderIndex: number) => {
     try {
-      // Get all cases for the target date
-      const casesOnDate = cases.filter(c => 
-        c.status === 'on_list' && 
+      console.log('Reorder request:', { caseId, targetDate, newOrderIndex });
+      
+      // Get all cases for the target date (including archived and completed)
+      const casesOnDate = [...cases, ...calendarCases, ...archivedCases].filter(c => 
         c.surgery_date && 
         format(new Date(c.surgery_date), 'yyyy-MM-dd') === targetDate
       ).sort((a, b) => a.order_index - b.order_index);
 
+      console.log('Cases on date:', casesOnDate.map(c => ({ id: c.id, name: c.name, status: c.status, order_index: c.order_index })));
+
       // Find the case being moved
-      const movingCase = cases.find(c => c.id === caseId);
-      if (!movingCase) return;
+      const movingCase = casesOnDate.find(c => c.id === caseId);
+      if (!movingCase) {
+        console.log('Moving case not found');
+        return;
+      }
+      
+      console.log('Moving case:', { id: movingCase.id, name: movingCase.name, status: movingCase.status, order_index: movingCase.order_index });
 
       // Remove the moving case from the list if it was already on this date
       const otherCases = casesOnDate.filter(c => c.id !== caseId);
@@ -630,15 +739,20 @@ export default function TraumaBoard() {
         order_index: index + 1
       }));
 
+      console.log('Final reordered cases:', reorderedCases.map(c => ({ id: c.id, name: c.name, status: c.status, order_index: c.order_index })));
+      console.log('Updates to apply:', updates);
+
       // Update all cases in parallel
       await Promise.all(
-        updates.map(update => 
-          handleUpdateCase(update.id, { 
+        updates.map(update => {
+          const caseToUpdate = casesOnDate.find(c => c.id === update.id);
+          return handleUpdateCase(update.id, { 
             order_index: update.order_index,
             surgery_date: targetDate,
-            status: 'on_list' as const
-          })
-        )
+            // Preserve the case's current status (don't change archived/completed to on_list)
+            status: caseToUpdate?.status || 'on_list'
+          });
+        })
       );
 
       toast.success('Cases reordered successfully');

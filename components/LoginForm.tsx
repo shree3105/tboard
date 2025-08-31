@@ -20,14 +20,14 @@ export default function LoginForm() {
   } = useForm<LoginRequest>();
 
   const onSubmit = async (data: LoginRequest) => {
-    console.log('Form submitted with data:', { email: data.email, password: '[HIDDEN]' });
+    // console.log('Form submitted with data:', { email: data.email, password: '[HIDDEN]' });
     setIsLoading(true);
     try {
-      console.log('Attempting login with:', data.email);
+      // console.log('Attempting login with:', data.email);
       await auth.login(data);
-      console.log('Login successful, token stored');
+      // console.log('Login successful, token stored');
       toast.success('Login successful!');
-      console.log('Redirecting to main page...');
+      // console.log('Redirecting to main page...');
       router.push('/');
     } catch (error: unknown) {
       console.error('Login error:', error);

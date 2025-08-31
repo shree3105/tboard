@@ -93,12 +93,14 @@ export interface CasesFilters {
 }
 
 export interface WebSocketMessage {
-  message_type: 'case_update';
-  action: 'create' | 'update' | 'delete';
+  message_type: 'case_update' | 'calendar_update';
+  action: 'create' | 'update' | 'delete' | 'add' | 'remove';
   case_id: string;
   timestamp: string;
   user_id: string;
   case_data: Case;
   changed_fields?: string[];
   original_data?: Partial<Case>;
+  week_start?: string;
+  week_end?: string;
 }

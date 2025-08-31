@@ -13,7 +13,6 @@ export class WebSocketClient {
   constructor() {
     // Generate a unique ID for this tab instance
     this.tabId = `tab_${Math.random().toString(36).substr(2, 9)}`;
-    console.log(`WebSocket client initialized for tab: ${this.tabId}`);
   }
 
   connect(token?: string) {
@@ -30,34 +29,34 @@ export class WebSocketClient {
 
     this.isConnecting = true;
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'wss://trauma-board-api.onrender.com/ws';
-    console.log('WebSocket URL from environment:', process.env.NEXT_PUBLIC_WS_URL);
-    console.log('Using WebSocket URL:', wsUrl);
+    // console.log('WebSocket URL from environment:', process.env.NEXT_PUBLIC_WS_URL);
+    // console.log('Using WebSocket URL:', wsUrl);
     const url = `${wsUrl}?token=${authToken}`;
 
-    try {
-      console.log(`[${this.tabId}] Attempting WebSocket connection to:`, url);
-      this.ws = new WebSocket(url);
+          try {
+        // console.log(`[${this.tabId}] Attempting WebSocket connection to:`, url);
+        this.ws = new WebSocket(url);
 
-      this.ws.onopen = () => {
-        console.log(`[${this.tabId}] WebSocket connected successfully to:`, url);
-        this.reconnectAttempts = 0;
-        this.isConnecting = false;
-      };
+        this.ws.onopen = () => {
+          console.log(`[${this.tabId}] WebSocket connected`);
+          this.reconnectAttempts = 0;
+          this.isConnecting = false;
+        };
 
-      this.ws.onmessage = (event) => {
-        try {
-          console.log(`[${this.tabId}] Raw WebSocket message received:`, event.data);
-          const message: WebSocketMessage = JSON.parse(event.data);
-          console.log(`[${this.tabId}] Parsed WebSocket message:`, message);
-          this.notifyListeners(message);
-        } catch (error) {
-          console.error(`[${this.tabId}] Failed to parse WebSocket message:`, error);
-          console.error(`[${this.tabId}] Raw message data:`, event.data);
-        }
-      };
+              this.ws.onmessage = (event) => {
+          try {
+            // console.log(`[${this.tabId}] Raw WebSocket message received:`, event.data);
+            const message: WebSocketMessage = JSON.parse(event.data);
+            // console.log(`[${this.tabId}] Parsed WebSocket message:`, message);
+            this.notifyListeners(message);
+          } catch (error) {
+            console.error(`[${this.tabId}] Failed to parse WebSocket message:`, error);
+            console.error(`[${this.tabId}] Raw message data:`, event.data);
+          }
+        };
 
       this.ws.onclose = (event) => {
-        console.log(`[${this.tabId}] WebSocket disconnected`, event.code, event.reason);
+        console.log(`[${this.tabId}] WebSocket disconnected (${event.code})`);
         this.isConnecting = false;
         
         // Don't reconnect if it was a clean close or auth error
@@ -82,7 +81,7 @@ export class WebSocketClient {
   private attemptReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`[${this.tabId}] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+              // console.log(`[${this.tabId}] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
       
       setTimeout(() => {
         this.connect();
@@ -112,7 +111,7 @@ export class WebSocketClient {
   }
 
   private notifyListeners(message: WebSocketMessage) {
-    console.log(`[${this.tabId}] Notifying WebSocket listeners:`, message);
+    // console.log(`[${this.tabId}] Notifying WebSocket listeners:`, message);
     this.listeners.forEach((callback, index) => {
       try {
         callback(message);

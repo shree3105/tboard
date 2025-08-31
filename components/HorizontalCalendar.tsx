@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Case } from '@/lib/types';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { CheckCircle, GripVertical } from 'lucide-react';
@@ -40,6 +40,13 @@ export default function HorizontalCalendar({
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   }, [currentWeek]);
 
+  // Synchronize calendar week with TraumaBoard whenever currentWeek changes
+  useEffect(() => {
+    const start = startOfWeek(currentWeek, { weekStartsOn: 6 }); // Start on Saturday
+    const end = addDays(start, 6); // End on Friday
+    onWeekChange(start, end);
+  }, [currentWeek]); // Only run when currentWeek changes
+
   const handleDragOver = (e: React.DragEvent, date?: Date, insertIndex?: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
@@ -75,7 +82,9 @@ export default function HorizontalCalendar({
     
     if (!caseId) return;
 
-    const draggedCaseData = cases.find(c => c.id === caseId);
+    // Look for the dragged case in all case arrays
+    const draggedCaseData = cases.find(c => c.id === caseId) || 
+                           calendarCases.find(c => c.id === caseId);
     if (!draggedCaseData) return;
 
     // Check if we're moving to the same date (reordering)
@@ -85,7 +94,7 @@ export default function HorizontalCalendar({
       // Reordering within the same date
       await onReorderCases(caseId, dateString, insertIndex + 1);
     } else {
-      // Moving to a different date
+      // Moving to a different date (only for non-archived cases)
       const casesOnTargetDate = getCasesForDate(date);
       const newOrderIndex = insertIndex !== undefined ? insertIndex + 1 : casesOnTargetDate.length + 1;
       
@@ -124,13 +133,12 @@ export default function HorizontalCalendar({
   const getCasesForDate = (date: Date) => {
     return calendarCases
       .filter(caseItem => {
-        // Show any case with surgery date (including archived and completed)
         if (!caseItem.surgery_date) {
           return false;
         }
         return isSameDay(new Date(caseItem.surgery_date), date);
       })
-      .sort((a, b) => a.order_index - b.order_index); // Sort by order_index
+      .sort((a, b) => a.order_index - b.order_index);
   };
 
   const getDayName = (date: Date) => {
@@ -281,8 +289,8 @@ export default function HorizontalCalendar({
                       draggable={caseItem.status !== 'completed' && caseItem.status !== 'archived'}
                       onDragStart={caseItem.status !== 'completed' && caseItem.status !== 'archived' ? (e) => handleDragStart(e, caseItem) : undefined}
                       onDragEnd={handleDragEnd}
-                      onDragOver={caseItem.status !== 'completed' && caseItem.status !== 'archived' ? (e) => handleCaseDragOver(e, date, index) : undefined}
-                      onDrop={caseItem.status !== 'completed' && caseItem.status !== 'archived' ? (e) => handleCaseDrop(e, date, index) : undefined}
+                      onDragOver={(e) => handleCaseDragOver(e, date, index)}
+                      onDrop={(e) => handleCaseDrop(e, date, index)}
                     >
                       <div className="flex items-center justify-between">
                         {caseItem.status !== 'completed' && caseItem.status !== 'archived' && (
@@ -290,7 +298,9 @@ export default function HorizontalCalendar({
                         )}
                         <div className={`flex-1 min-w-0 ${caseItem.status !== 'completed' && caseItem.status !== 'archived' ? 'ml-1' : ''}`}>
                           <div className="font-medium truncate">{caseItem.name}</div>
-                          <div className="text-xs opacity-75 truncate">#{caseItem.hospital_number || 'N/A'}</div>
+                          {caseItem.hospital_number && (
+                            <div className="text-xs opacity-75 truncate">#{caseItem.hospital_number}</div>
+                          )}
                           <div className="text-xs opacity-75 truncate">{caseItem.diagnosis}</div>
                         </div>
                         {caseItem.status !== 'completed' && caseItem.status !== 'archived' && (
@@ -311,7 +321,7 @@ export default function HorizontalCalendar({
                 ))}
                 
                 {/* Drop indicator at the bottom */}
-                {casesForDate.length > 0 && renderDropIndicator(date, casesForDate.length)}
+                {renderDropIndicator(date, casesForDate.length)}
                 
                 {casesForDate.length === 0 && (
                   <div className="text-center text-gray-400 text-xs py-4">
