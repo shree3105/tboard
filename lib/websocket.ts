@@ -38,7 +38,7 @@ export class WebSocketClient {
         this.ws = new WebSocket(url);
 
         this.ws.onopen = () => {
-          console.log(`[${this.tabId}] WebSocket connected`);
+          // WebSocket connected
           this.reconnectAttempts = 0;
           this.isConnecting = false;
         };
@@ -56,12 +56,12 @@ export class WebSocketClient {
         };
 
       this.ws.onclose = (event) => {
-        console.log(`[${this.tabId}] WebSocket disconnected (${event.code})`);
+        // WebSocket disconnected
         this.isConnecting = false;
         
         // Don't reconnect if it was a clean close or auth error
         if (event.code === 1000 || event.code === 1001 || event.code === 1008) {
-          console.log(`[${this.tabId}] WebSocket closed cleanly, not reconnecting`);
+          // WebSocket closed cleanly, not reconnecting
           return;
         }
         

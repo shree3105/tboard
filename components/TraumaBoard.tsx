@@ -24,8 +24,6 @@ export default function TraumaBoard() {
   const [currentCalendarWeek, setCurrentCalendarWeek] = useState<{ startDate: Date; endDate: Date }>(() => {
     // Initialize with the current week (Saturday to Friday)
     const today = new Date();
-    console.log('TraumaBoard initialization - today:', today.toISOString());
-    console.log('TraumaBoard initialization - today.getDay():', today.getDay());
     
     // Calculate the current week (Saturday to Friday)
     const startOfWeek = new Date(today);
@@ -35,9 +33,6 @@ export default function TraumaBoard() {
     
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6); // End on Friday
-    
-    console.log('TraumaBoard initialization - calculated startOfWeek:', startOfWeek.toISOString());
-    console.log('TraumaBoard initialization - calculated endOfWeek:', endOfWeek.toISOString());
     
     return { startDate: startOfWeek, endDate: endOfWeek };
   });
@@ -72,8 +67,6 @@ export default function TraumaBoard() {
       
       // Filter for non-archived cases on the frontend
       const nonArchivedCases = data.filter(caseItem => caseItem.status !== 'archived');
-      // console.log('Main cases API response:', nonArchivedCases);
-      console.log('Number of main cases:', nonArchivedCases.length);
       setCases(nonArchivedCases);
     } catch (error: unknown) {
       console.error('Error fetching main cases:', error);
@@ -90,8 +83,6 @@ export default function TraumaBoard() {
       // Use the refresh endpoint and filter for archived cases
       const allCasesData = await casesAPI.refreshCases();
       const archivedData = allCasesData.filter(caseItem => caseItem.status === 'archived');
-      // console.log('Archived cases API response:', archivedData);
-      console.log('Number of archived cases:', archivedData.length);
       setArchivedCases(archivedData);
     } catch (error: unknown) {
       console.error('Error fetching archived cases:', error);
@@ -119,12 +110,7 @@ export default function TraumaBoard() {
       ]);
       
              const combinedData = [...nonArchivedData, ...archivedData];
-       // console.log('Calendar cases API response:', combinedData);
-       // console.log('Non-archived calendar cases:', nonArchivedData.length);
-       // console.log('Archived calendar cases:', archivedData.length);
-       console.log('Total calendar cases:', combinedData.length);
-      
-      setCalendarCases(combinedData);
+             setCalendarCases(combinedData);
     } catch (error: unknown) {
       console.error('Error fetching calendar cases:', error);
       toast.error('Failed to fetch calendar cases');
@@ -141,10 +127,6 @@ export default function TraumaBoard() {
   };
 
   const handleWeekChange = useCallback(async (startDate: Date, endDate: Date) => {
-    console.log('TraumaBoard handleWeekChange called with:', {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString()
-    });
     setCurrentCalendarWeek({ startDate, endDate });
     await fetchCalendarCases(startDate, endDate);
   }, []);
@@ -190,24 +172,24 @@ export default function TraumaBoard() {
         
         switch (message.action) {
           case 'create':
-            console.log('Case created via WebSocket:', message.case_data.name);
+            // Case created via WebSocket
             handleWebSocketCreateEnhanced(message.case_data);
             break;
           case 'update':
-            console.log('Case updated via WebSocket:', message.case_data.name);
+            // Case updated via WebSocket
             handleWebSocketUpdateEnhanced(message.case_data);
             break;
           case 'delete':
-            console.log('Case deleted via WebSocket:', message.case_id);
+            // Case deleted via WebSocket
             handleWebSocketDelete(message.case_id);
             break;
           default:
-            console.log('Unknown WebSocket action, refreshing all cases:', message.action);
+            // Unknown WebSocket action, refreshing all cases
             await fetchCases();
         }
       } else {
         // Fallback for old message format
-        console.log('Legacy WebSocket message format, refreshing all cases');
+        // Legacy WebSocket message format, refreshing all cases
         await fetchCases();
       }
     } catch (error) {
@@ -275,7 +257,7 @@ export default function TraumaBoard() {
 
 
   const handleWebSocketDelete = (caseId: string) => {
-    console.log('Removing case from all states:', caseId);
+    // Removing case from all states
     setCases(prev => prev.filter(c => c.id !== caseId));
     setCalendarCases(prev => prev.filter(c => c.id !== caseId));
     setArchivedCases(prev => prev.filter(c => c.id !== caseId));
@@ -283,7 +265,7 @@ export default function TraumaBoard() {
 
   // Enhanced WebSocket handlers that use complete case data
   const handleWebSocketCreateEnhanced = (newCase: Case) => {
-    console.log('Adding new case to state with complete data:', newCase.name);
+    // Adding new case to state
     
     // Add to appropriate state based on status
     if (newCase.status === 'archived') {
@@ -313,7 +295,7 @@ export default function TraumaBoard() {
   };
 
   const handleWebSocketUpdateEnhanced = (updatedCase: Case) => {
-    console.log('Updating case in state with complete data:', updatedCase.name);
+    // Updating case in state
     
     // Update all states atomically using complete case data
     setCases(prev => {
@@ -370,27 +352,17 @@ export default function TraumaBoard() {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        console.log('Fetching initial data...');
-        
         // 1. Fetch all cases using the new refresh endpoint
-        console.log('Fetching initial data with refresh endpoint...');
         let allCasesData;
         try {
           allCasesData = await casesAPI.refreshCases();
-          console.log('All cases data received from refresh:', allCasesData);
         } catch (error) {
           console.warn('Refresh endpoint failed, falling back to regular getCases:', error);
           allCasesData = await casesAPI.getCases();
-          console.log('All cases data received from getCases:', allCasesData);
         }
         
-        console.log('All cases data type:', typeof allCasesData);
-        console.log('All cases data length:', allCasesData?.length);
-        
         const mainTableData = allCasesData.filter(caseItem => caseItem.status !== 'archived');
-        console.log('Filtered main table data:', mainTableData);
         setCases(mainTableData);
-        console.log('Main table cases:', mainTableData.length);
         
         // 2. Fetch non-archived cases with surgery dates for current week
         const { startOfWeek, endOfWeek } = getCurrentWeekDates();
@@ -412,7 +384,6 @@ export default function TraumaBoard() {
         
         const calendarData = [...nonArchivedCalendarData, ...archivedCalendarData];
         setCalendarCases(calendarData);
-        console.log('Calendar cases:', calendarData.length);
         
       } catch (error: unknown) {
         console.error('Error fetching initial data:', error);
@@ -428,18 +399,11 @@ export default function TraumaBoard() {
     const initializeWebSocket = () => {
       const token = auth.getToken();
       if (token) {
-        console.log('Initializing WebSocket with token:', token.substring(0, 20) + '...');
+        // Initializing WebSocket
         const ws = new WebSocketClient();
         
         // Add connection status logging
         ws.onMessage((message) => {
-          console.log(`[${new Date().toISOString()}] TraumaBoard received WebSocket message:`, {
-            type: message.message_type,
-            action: message.action,
-            case_id: message.case_id,
-            has_case_data: !!message.case_data,
-            changed_fields: message.changed_fields
-          });
           handleWebSocketMessage(message);
         });
         
@@ -452,7 +416,7 @@ export default function TraumaBoard() {
         // Set up periodic connection check
         const connectionCheck = setInterval(() => {
           if (!ws.isConnected()) {
-            console.log('WebSocket disconnected, attempting to reconnect...');
+            // WebSocket disconnected, attempting to reconnect
             ws.connect(token);
           }
         }, 30000); // Check every 30 seconds
@@ -516,7 +480,7 @@ export default function TraumaBoard() {
         Object.entries(updates).filter(([_, value]) => value !== null && value !== undefined)
       );
 
-      console.log('Updating case:', caseId, 'with data:', cleanUpdates);
+      // Updating case via API
 
       // Optimistic update - update local state immediately
       const optimisticCase = { ...cases.find(c => c.id === caseId), ...cleanUpdates } as Case;
@@ -707,24 +671,17 @@ export default function TraumaBoard() {
 
   const handleReorderCases = async (caseId: string, targetDate: string, newOrderIndex: number) => {
     try {
-      console.log('Reorder request:', { caseId, targetDate, newOrderIndex });
-      
       // Get all cases for the target date (including archived and completed)
       const casesOnDate = [...cases, ...calendarCases, ...archivedCases].filter(c => 
         c.surgery_date && 
         format(new Date(c.surgery_date), 'yyyy-MM-dd') === targetDate
       ).sort((a, b) => a.order_index - b.order_index);
 
-      console.log('Cases on date:', casesOnDate.map(c => ({ id: c.id, name: c.name, status: c.status, order_index: c.order_index })));
-
       // Find the case being moved
       const movingCase = casesOnDate.find(c => c.id === caseId);
       if (!movingCase) {
-        console.log('Moving case not found');
         return;
       }
-      
-      console.log('Moving case:', { id: movingCase.id, name: movingCase.name, status: movingCase.status, order_index: movingCase.order_index });
 
       // Remove the moving case from the list if it was already on this date
       const otherCases = casesOnDate.filter(c => c.id !== caseId);
@@ -739,8 +696,7 @@ export default function TraumaBoard() {
         order_index: index + 1
       }));
 
-      console.log('Final reordered cases:', reorderedCases.map(c => ({ id: c.id, name: c.name, status: c.status, order_index: c.order_index })));
-      console.log('Updates to apply:', updates);
+      // Apply updates to reorder cases
 
       // Update all cases in parallel
       await Promise.all(
