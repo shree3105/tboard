@@ -349,16 +349,19 @@ export default function CasesTable({
 
   const handleDragEnd = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     onDragEnd();
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
   };
 
   const handleDropOnSection = (e: React.DragEvent, section: string, subspecialty?: string) => {
     e.preventDefault();
+    e.stopPropagation();
     const caseId = e.dataTransfer.getData('text/plain');
     if (caseId && section !== 'completed') {
       onDropOnSection(caseId, section, subspecialty);
@@ -737,7 +740,15 @@ export default function CasesTable({
                   <div 
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropOnSection(e, 'awaiting_surgery', mainSection)}
-                    className="p-8 text-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"
+                    onDragEnter={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add('bg-blue-50', 'border-blue-300');
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove('bg-blue-50', 'border-blue-300');
+                    }}
+                    className="p-8 text-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 transition-colors"
                   >
                     <p className="text-gray-500 text-sm">
                       Drag cases here to assign to {getMainSectionTitle(mainSection)}
@@ -749,6 +760,14 @@ export default function CasesTable({
                   <div 
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropOnSection(e, 'awaiting_surgery', mainSection)}
+                    onDragEnter={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add('bg-blue-50');
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove('bg-blue-50');
+                    }}
                   >
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">

@@ -11,7 +11,7 @@ export default function LoginPage() {
   useEffect(() => {
     // Check if user is already authenticated on the client side
     if (auth.isAuthenticated()) {
-      router.push('/dashboard');
+      router.push('/');
     }
   }, [router]);
 

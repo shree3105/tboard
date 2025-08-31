@@ -10,12 +10,25 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is authenticated on the client side
-    if (!auth.isAuthenticated()) {
-      router.push('/login');
-    } else {
-      setIsLoading(false);
-    }
+    console.log('HomePage: Checking authentication...');
+    // Add a small delay to ensure token is properly stored after login
+    const checkAuth = () => {
+      if (!auth.isAuthenticated()) {
+        console.log('HomePage: Not authenticated, redirecting to login');
+        router.push('/login');
+      } else {
+        console.log('HomePage: Authenticated, showing TraumaBoard');
+        setIsLoading(false);
+      }
+    };
+    
+    // Check immediately
+    checkAuth();
+    
+    // Also check after a short delay to handle login redirects
+    const timeoutId = setTimeout(checkAuth, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, [router]);
 
   if (isLoading) {

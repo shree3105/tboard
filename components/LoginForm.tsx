@@ -20,6 +20,7 @@ export default function LoginForm() {
   } = useForm<LoginRequest>();
 
   const onSubmit = async (data: LoginRequest) => {
+    console.log('Form submitted with data:', { email: data.email, password: '[HIDDEN]' });
     setIsLoading(true);
     try {
       console.log('Attempting login with:', data.email);

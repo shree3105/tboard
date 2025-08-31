@@ -30,6 +30,9 @@ api.interceptors.request.use((config) => {
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Adding auth token to request:', config.url);
+    } else {
+      console.warn('No auth token found for request:', config.url);
     }
   }
   return config;
@@ -101,8 +104,41 @@ export const casesAPI = {
     }
     
     const url = `/cases/?${params.toString()}`;
+    console.log('Getting cases with URL:', url);
     const response = await api.get(url);
-    return response.data;
+    console.log('Get cases response:', response);
+    console.log('Get cases data:', response.data);
+    
+    // Handle different response structures
+    if (response.data && Array.isArray(response.data)) {
+      return response.data;
+    } else if (response.data && Array.isArray(response.data.items)) {
+      return response.data.items;
+    } else if (response.data && Array.isArray(response.data.cases)) {
+      return response.data.cases;
+    } else {
+      console.warn('Unexpected response structure:', response.data);
+      return [];
+    }
+  },
+
+  // New refresh endpoint for initial data loading
+  refreshCases: async (): Promise<Case[]> => {
+    const response = await api.get('/cases/refresh');
+    console.log('Refresh cases response:', response);
+    console.log('Refresh cases data:', response.data);
+    
+    // Handle different response structures
+    if (response.data && Array.isArray(response.data)) {
+      return response.data;
+    } else if (response.data && Array.isArray(response.data.items)) {
+      return response.data.items;
+    } else if (response.data && Array.isArray(response.data.cases)) {
+      return response.data.cases;
+    } else {
+      console.warn('Unexpected refresh response structure:', response.data);
+      return [];
+    }
   },
 
   createCase: async (caseData: CreateCaseRequest): Promise<Case> => {
@@ -118,6 +154,18 @@ export const casesAPI = {
 
   deleteCase: async (caseId: string): Promise<void> => {
     await api.delete(`/cases/${caseId}`);
+  },
+
+  // New search functionality
+  searchCases: async (query: string): Promise<Case[]> => {
+    const response = await api.get(`/cases/search?q=${encodeURIComponent(query)}`);
+    return response.data;
+  },
+
+  // New audit trail functionality
+  getCaseAudit: async (caseId: string): Promise<any[]> => {
+    const response = await api.get(`/cases/${caseId}/audit`);
+    return response.data;
   },
 };
 

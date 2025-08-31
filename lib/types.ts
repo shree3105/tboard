@@ -93,6 +93,12 @@ export interface CasesFilters {
 }
 
 export interface WebSocketMessage {
+  message_type: 'case_update';
   action: 'create' | 'update' | 'delete';
-  case: string; // This is the case ID according to API docs
+  case_id: string;
+  timestamp: string;
+  user_id: string;
+  case_data: Case;
+  changed_fields?: string[];
+  original_data?: Partial<Case>;
 }
