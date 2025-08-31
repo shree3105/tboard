@@ -113,7 +113,7 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
                 <th className="table-header">Gender</th>
                 <th className="table-header">Consultant</th>
                 <th className="table-header">History</th>
-                <th className="table-header">Original Section</th>
+                <th className="table-header">Subspecialty</th>
                 <th className="table-header">Surgery Date</th>
                 <th className="table-header">Archived Date</th>
                 <th className="table-header">Actions</th>
@@ -122,33 +122,33 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
             <tbody className="bg-white divide-y divide-gray-200">
               {archivedCases.map((caseItem) => (
                 <tr key={caseItem.id} className="hover:bg-gray-50">
-                  <td className="table-cell font-medium">{caseItem.name}</td>
-                  <td className="table-cell">{caseItem.hospital_number}</td>
-                  <td className="table-cell">{caseItem.diagnosis}</td>
+                                     <td className="table-cell font-medium">{caseItem.name}</td>
+                   <td className="table-cell">{caseItem.hospital_number || '-'}</td>
+                   <td className="table-cell">{caseItem.diagnosis}</td>
+                   <td className="table-cell">
+                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                       caseItem.outcome === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
+                       caseItem.outcome === 'Completed' ? 'bg-green-100 text-green-800' :
+                       caseItem.outcome === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                       'bg-yellow-100 text-yellow-800'
+                     }`}>
+                       {caseItem.outcome}
+                     </span>
+                   </td>
+                   <td className="table-cell">
+                     {caseItem.referral_date ? new Date(caseItem.referral_date).toLocaleDateString() : '-'}
+                   </td>
+                   <td className="table-cell">{caseItem.age || '-'}</td>
+                   <td className="table-cell">{caseItem.gender || '-'}</td>
+                   <td className="table-cell">{caseItem.consultant || '-'}</td>
+                   <td className="table-cell">
+                     <div className="max-w-xs truncate" title={caseItem.history || ''}>
+                       {caseItem.history || '-'}
+                     </div>
+                   </td>
                   <td className="table-cell">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      caseItem.outcome === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
-                      caseItem.outcome === 'Completed' ? 'bg-green-100 text-green-800' :
-                      caseItem.outcome === 'Cancelled' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {caseItem.outcome}
-                    </span>
-                  </td>
-                  <td className="table-cell">
-                    {caseItem.referral_date ? new Date(caseItem.referral_date).toLocaleDateString() : '-'}
-                  </td>
-                  <td className="table-cell">{caseItem.age}</td>
-                  <td className="table-cell">{caseItem.gender}</td>
-                  <td className="table-cell">{caseItem.consultant}</td>
-                  <td className="table-cell">
-                    <div className="max-w-xs truncate" title={caseItem.history}>
-                      {caseItem.history}
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getSectionColor(caseItem.original_section || caseItem.section)}`}>
-                      {getSectionTitle(caseItem.original_section || caseItem.section)}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getSectionColor(caseItem.subspecialty)}`}>
+                      {getSectionTitle(caseItem.subspecialty)}
                     </span>
                   </td>
                   <td className="table-cell">

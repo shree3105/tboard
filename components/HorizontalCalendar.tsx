@@ -272,26 +272,28 @@ export default function HorizontalCalendar({
                     
                     <div
                       className={`p-2 rounded text-xs relative group transition-colors ${
-                        caseItem.section === 'completed'
+                        caseItem.status === 'completed'
                           ? 'bg-green-100 text-green-800 border border-green-200 cursor-default'
+                          : caseItem.status === 'archived'
+                          ? 'bg-gray-100 text-gray-800 border border-gray-200 cursor-default'
                           : 'bg-orange-100 text-orange-800 border border-orange-200 cursor-grab active:cursor-grabbing hover:bg-orange-200'
                       }`}
-                      draggable={caseItem.section !== 'completed'}
-                      onDragStart={caseItem.section !== 'completed' ? (e) => handleDragStart(e, caseItem) : undefined}
+                      draggable={caseItem.status !== 'completed' && caseItem.status !== 'archived'}
+                      onDragStart={caseItem.status !== 'completed' && caseItem.status !== 'archived' ? (e) => handleDragStart(e, caseItem) : undefined}
                       onDragEnd={handleDragEnd}
-                      onDragOver={caseItem.section !== 'completed' ? (e) => handleCaseDragOver(e, date, index) : undefined}
-                      onDrop={caseItem.section !== 'completed' ? (e) => handleCaseDrop(e, date, index) : undefined}
+                      onDragOver={caseItem.status !== 'completed' && caseItem.status !== 'archived' ? (e) => handleCaseDragOver(e, date, index) : undefined}
+                      onDrop={caseItem.status !== 'completed' && caseItem.status !== 'archived' ? (e) => handleCaseDrop(e, date, index) : undefined}
                     >
                       <div className="flex items-center justify-between">
-                        {caseItem.section !== 'completed' && (
+                        {caseItem.status !== 'completed' && caseItem.status !== 'archived' && (
                           <GripVertical className="h-3 w-3 text-orange-600 flex-shrink-0" />
                         )}
-                        <div className={`flex-1 min-w-0 ${caseItem.section !== 'completed' ? 'ml-1' : ''}`}>
+                        <div className={`flex-1 min-w-0 ${caseItem.status !== 'completed' && caseItem.status !== 'archived' ? 'ml-1' : ''}`}>
                           <div className="font-medium truncate">{caseItem.name}</div>
-                          <div className="text-xs opacity-75 truncate">#{caseItem.hospital_number}</div>
+                          <div className="text-xs opacity-75 truncate">#{caseItem.hospital_number || 'N/A'}</div>
                           <div className="text-xs opacity-75 truncate">{caseItem.diagnosis}</div>
                         </div>
-                        {caseItem.section !== 'completed' && (
+                        {caseItem.status !== 'completed' && caseItem.status !== 'archived' && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

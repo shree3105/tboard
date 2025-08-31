@@ -9,20 +9,19 @@ export interface Case {
   name: string;
   diagnosis: string;
   outcome: string;
-  section: string;
+  status: string; // CaseStatus enum: new_referral, awaiting_surgery, on_list, completed, onward_referrals, archived
+  subspecialty: string | null; // CaseSubspecialty enum: hip_and_knee, foot_and_ankle, shoulder_and_elbow, hand (nullable)
   surgery_date: string | null;
   order_index: number;
-  archived: boolean;
   created_at: string;
   updated_at: string;
-  // Newly added columns
-  hospital_number: string;
+  // Additional columns (all nullable as per backend)
+  hospital_number: string | null;
   referral_date: string | null;
-  age: number;
-  gender: string;
-  consultant: string;
-  history: string;
-  original_section: string | null;
+  age: number | null;
+  gender: string | null;
+  consultant: string | null;
+  history: string | null;
 }
 
 export interface LoginRequest {
@@ -44,46 +43,45 @@ export interface CreateCaseRequest {
   name: string;
   diagnosis: string;
   outcome: string;
-  section: string;
+  status: string;
+  subspecialty?: string | null;
   surgery_date?: string | null;
   order_index: number;
-  // Newly added columns
-  hospital_number: string;
+  // Additional columns (all nullable as per backend)
+  hospital_number?: string | null;
   referral_date?: string | null;
-  age: number;
-  gender: string;
-  consultant: string;
-  history: string;
-  original_section?: string | null;
+  age?: number | null;
+  gender?: string | null;
+  consultant?: string | null;
+  history?: string | null;
 }
 
 export interface UpdateCaseRequest {
   name?: string;
   diagnosis?: string;
   outcome?: string;
-  section?: string;
+  status?: string;
+  subspecialty?: string | null;
   surgery_date?: string | null;
   order_index?: number;
-  archived?: boolean;
-  // Newly added columns
-  hospital_number?: string;
+  // Additional columns (all nullable as per backend)
+  hospital_number?: string | null;
   referral_date?: string | null;
-  age?: number;
-  gender?: string;
-  consultant?: string;
-  history?: string;
-  original_section?: string | null;
+  age?: number | null;
+  gender?: string | null;
+  consultant?: string | null;
+  history?: string | null;
 }
 
 export interface CasesFilters {
   name?: string;
   diagnosis?: string;
   outcome?: string;
-  section?: string;
+  status?: string;
+  subspecialty?: string;
   surgery_date_from?: string;
   surgery_date_to?: string;
-  archived?: boolean;
-  // Newly added columns for filtering
+  // Additional columns for filtering
   hospital_number?: string;
   referral_date_from?: string;
   referral_date_to?: string;

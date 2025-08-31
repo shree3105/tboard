@@ -42,7 +42,16 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Enhanced error handling
+    // Enhanced error handling with detailed logging
+    console.error('API Error:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      method: error.config?.method,
+      data: error.response?.data,
+      requestData: error.config?.data
+    });
+    
     if (error.response?.status === 401) {
       console.warn('Authentication failed - redirecting to login');
       if (typeof window !== 'undefined') {
@@ -51,6 +60,8 @@ api.interceptors.response.use(
       }
     } else if (error.response?.status === 403) {
       console.error('Access forbidden - insufficient permissions');
+    } else if (error.response?.status === 422) {
+      console.error('Validation error - check request data format');
     } else if (error.response?.status >= 500) {
       console.error('Server error:', error.response.status);
     } else if (error.code === 'ECONNABORTED') {
@@ -100,6 +111,7 @@ export const casesAPI = {
   },
 
   updateCase: async (caseId: string, caseData: UpdateCaseRequest): Promise<Case> => {
+    console.log('API updateCase called with:', { caseId, caseData });
     const response = await api.patch(`/cases/${caseId}`, caseData);
     return response.data;
   },

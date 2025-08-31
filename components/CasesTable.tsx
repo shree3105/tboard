@@ -12,7 +12,7 @@ interface CasesTableProps {
   onArchiveCase: (caseId: string) => Promise<void>;
   onDragStart: (caseItem: Case) => void;
   onDragEnd: () => void;
-  onDropOnSection: (caseId: string, newSection: string) => Promise<void>;
+  onDropOnSection: (caseId: string, newSection: string, newSubspecialty?: string) => Promise<void>;
 }
 
 export default function CasesTable({ 
@@ -30,37 +30,38 @@ export default function CasesTable({
     name?: string;
     diagnosis?: string;
     outcome?: string;
-    section?: string;
-    hospital_number?: string;
+    status?: string;
+    subspecialty?: string | null;
+    hospital_number?: string | null;
     referral_date?: string | null;
-    age?: number;
-    gender?: string;
-    consultant?: string;
-    history?: string;
+    age?: number | null;
+    gender?: string | null;
+    consultant?: string | null;
+    history?: string | null;
   }>({});
   const [newCaseData, setNewCaseData] = useState<Partial<Case>>({
     name: '',
     diagnosis: '',
     outcome: 'Pending',
-    section: 'new_referral',
-    hospital_number: '',
+    status: 'new_referral',
+    subspecialty: 'new_referral', // New cases have 'new_referral' as subspecialty
+    hospital_number: null,
     referral_date: null,
-    age: 0,
-    gender: '',
-    consultant: '',
-    history: '',
-    original_section: null
+    age: null,
+    gender: null,
+    consultant: null,
+    history: null
   });
   const [isAddingNew, setIsAddingNew] = useState(false);
 
-  // Filter cases for table display and map sections
+  // Filter cases for table display
   const tableCases = cases.filter(caseItem => {
     // Don't show archived cases in the main table
-    if (caseItem.archived) {
+    if (caseItem.status === 'archived') {
       return false;
     }
     // Show all cases except those that are on_list with surgery dates (they go to calendar)
-    if (caseItem.section === 'on_list' && caseItem.surgery_date) {
+    if (caseItem.status === 'on_list' && caseItem.surgery_date) {
       return false;
     }
     // Show completed cases in the main table regardless of surgery date
@@ -68,60 +69,81 @@ export default function CasesTable({
     return true;
   }).map(caseItem => {
     // Map on_list cases without surgery dates to awaiting_surgery for display
-    if (caseItem.section === 'on_list' && !caseItem.surgery_date) {
-      return { ...caseItem, section: 'awaiting_surgery' };
+    if (caseItem.status === 'on_list' && !caseItem.surgery_date) {
+      return { ...caseItem, status: 'awaiting_surgery' };
     }
     return caseItem;
   });
 
-  // Group cases by section and sort them
+  // Group cases by main sections: new_referral, subspecialties, completed
   const groupedCases = tableCases.reduce((acc, caseItem) => {
-    if (!acc[caseItem.section]) {
-      acc[caseItem.section] = [];
+    let mainSection: string;
+    
+    // Determine main section based on status and subspecialty
+    if (caseItem.status === 'new_referral') {
+      mainSection = 'new_referral';
+    } else if (caseItem.status === 'completed') {
+      mainSection = 'completed';
+    } else {
+      // For other statuses, group by subspecialty
+      mainSection = caseItem.subspecialty || 'unassigned';
     }
-    acc[caseItem.section].push(caseItem);
+    
+    if (!acc[mainSection]) {
+      acc[mainSection] = {};
+    }
+    if (!acc[mainSection][caseItem.status]) {
+      acc[mainSection][caseItem.status] = [];
+    }
+    acc[mainSection][caseItem.status].push(caseItem);
     return acc;
-  }, {} as Record<string, Case[]>);
+  }, {} as Record<string, Record<string, Case[]>>);
 
-  // Sort cases within each section by order_index
-  Object.keys(groupedCases).forEach(section => {
-    groupedCases[section].sort((a, b) => a.order_index - b.order_index);
+  // Sort cases within each status by order_index
+  Object.keys(groupedCases).forEach(mainSection => {
+    Object.keys(groupedCases[mainSection]).forEach(status => {
+      groupedCases[mainSection][status].sort((a, b) => a.order_index - b.order_index);
+    });
   });
 
-  // Define section order for table
-  const sectionOrder = ['new_referral', 'awaiting_surgery', 'hip_and_knee', 'foot_and_ankle', 'shoulder_and_elbow', 'hand', 'onward_referrals', 'completed'];
+  // Define main section order: New Referrals, Subspecialties, Completed
+  const mainSectionOrder = ['new_referral', 'hip_and_knee', 'foot_and_ankle', 'shoulder_and_elbow', 'hand', 'completed'];
 
-  const getSectionTitle = (section: string) => {
-    switch (section) {
-      case 'new_referral':
-        return 'New Referrals';
+  // Define status order within subspecialty sections
+  const subspecialtyStatusOrder = ['awaiting_surgery', 'onward_referrals'];
+
+  // Helper function to get row background color based on status
+  const getRowBackgroundColor = (status: string) => {
+    switch (status) {
       case 'awaiting_surgery':
-        return 'Awaiting Surgery';
+      case 'on_list':
+        return 'bg-orange-50 hover:bg-orange-100';
       case 'completed':
-        return 'Completed';
-      case 'hip_and_knee':
-        return 'Hip and Knee';
-      case 'foot_and_ankle':
-        return 'Foot and Ankle';
-      case 'shoulder_and_elbow':
-        return 'Shoulder and Elbow';
-      case 'hand':
-        return 'Hand';
-      case 'onward_referrals':
-        return 'Onward Referrals';
+        return 'bg-green-50 hover:bg-green-100';
       default:
-        return section.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        return 'hover:bg-gray-50';
     }
   };
 
-  const getSectionColor = (section: string) => {
-    switch (section) {
-      case 'new_referral':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'awaiting_surgery':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'completed':
-        return 'bg-green-100 text-green-800 border-green-200';
+  const getSubspecialtyTitle = (subspecialty: string | null) => {
+    if (!subspecialty) return 'Unassigned';
+    switch (subspecialty) {
+      case 'hip_and_knee':
+        return 'Hip & Knee';
+      case 'foot_and_ankle':
+        return 'Foot & Ankle';
+      case 'shoulder_and_elbow':
+        return 'Shoulder & Elbow';
+      case 'hand':
+        return 'Hand';
+      default:
+        return subspecialty.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+  };
+
+  const getSubspecialtyColor = (subspecialty: string | null) => {
+    if (!subspecialty) return 'bg-gray-100 text-gray-800 border-gray-200';
+    switch (subspecialty) {
       case 'hip_and_knee':
         return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       case 'foot_and_ankle':
@@ -130,10 +152,76 @@ export default function CasesTable({
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'hand':
         return 'bg-teal-100 text-teal-800 border-teal-200';
-      case 'onward_referrals':
-        return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getMainSectionTitle = (mainSection: string) => {
+    switch (mainSection) {
+      case 'new_referral':
+        return 'New Referrals';
+      case 'hip_and_knee':
+        return 'Hip & Knee';
+      case 'foot_and_ankle':
+        return 'Foot & Ankle';
+      case 'shoulder_and_elbow':
+        return 'Shoulder & Elbow';
+      case 'hand':
+        return 'Hand';
+      case 'completed':
+        return 'Completed';
+      default:
+        return mainSection.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+  };
+
+  const getMainSectionColor = (mainSection: string) => {
+    switch (mainSection) {
+      case 'new_referral':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'hip_and_knee':
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      case 'foot_and_ankle':
+        return 'bg-pink-100 text-pink-800 border-pink-200';
+      case 'shoulder_and_elbow':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'hand':
+        return 'bg-teal-100 text-teal-800 border-teal-200';
+      case 'completed':
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusTitle = (status: string) => {
+    switch (status) {
+      case 'new_referral':
+        return 'New Referrals';
+      case 'awaiting_surgery':
+        return 'Awaiting Surgery';
+      case 'onward_referrals':
+        return 'Onward Referrals';
+      case 'completed':
+        return 'Completed';
+      default:
+        return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'new_referral':
+        return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'awaiting_surgery':
+        return 'bg-orange-50 text-orange-700 border-orange-200';
+      case 'onward_referrals':
+        return 'bg-red-50 text-red-700 border-red-200';
+      case 'completed':
+        return 'bg-green-50 text-green-700 border-green-200';
+      default:
+        return 'bg-gray-50 text-gray-600 border-gray-200';
     }
   };
 
@@ -143,7 +231,8 @@ export default function CasesTable({
       name: caseItem.name,
       diagnosis: caseItem.diagnosis,
       outcome: caseItem.outcome,
-      section: caseItem.section,
+      status: caseItem.status,
+      subspecialty: caseItem.subspecialty,
       hospital_number: caseItem.hospital_number,
       referral_date: caseItem.referral_date,
       age: caseItem.age,
@@ -163,6 +252,8 @@ export default function CasesTable({
     setEditingCase(null);
     setEditingData({});
   };
+
+
 
   const handleDelete = async (caseId: string) => {
     if (window.confirm('Are you sure you want to delete this case?')) {
@@ -184,14 +275,14 @@ export default function CasesTable({
       name: '',
       diagnosis: '',
       outcome: 'Pending',
-      section: 'new_referral',
-      hospital_number: '',
+      status: 'new_referral',
+      subspecialty: null,
+      hospital_number: null,
       referral_date: null,
-      age: 0,
-      gender: '',
-      consultant: '',
-      history: '',
-      original_section: null
+      age: null,
+      gender: null,
+      consultant: null,
+      history: null
     });
   };
 
@@ -202,16 +293,16 @@ export default function CasesTable({
         name: newCaseData.name,
         diagnosis: newCaseData.diagnosis,
         outcome: newCaseData.outcome || 'Pending',
-        section: 'new_referral',
-        order_index: cases.filter(c => c.section === 'new_referral').length + 1,
+        status: 'new_referral',
+        subspecialty: newCaseData.subspecialty,
+        order_index: cases.filter(c => c.status === 'new_referral').length + 1,
         surgery_date: null,
         hospital_number: newCaseData.hospital_number,
         referral_date: newCaseData.referral_date,
-        age: newCaseData.age || 0,
-        gender: newCaseData.gender || '',
-        consultant: newCaseData.consultant || '',
-        history: newCaseData.history || '',
-        original_section: null
+        age: newCaseData.age,
+        gender: newCaseData.gender,
+        consultant: newCaseData.consultant,
+        history: newCaseData.history
       };
       
       // Call the parent's create function
@@ -221,14 +312,14 @@ export default function CasesTable({
         name: '',
         diagnosis: '',
         outcome: 'Pending',
-        section: 'new_referral',
-        hospital_number: '',
+        status: 'new_referral',
+        subspecialty: 'new_referral',
+        hospital_number: null,
         referral_date: null,
-        age: 0,
-        gender: '',
-        consultant: '',
-        history: '',
-        original_section: null
+        age: null,
+        gender: null,
+        consultant: null,
+        history: null
       });
     }
   };
@@ -239,14 +330,14 @@ export default function CasesTable({
       name: '',
       diagnosis: '',
       outcome: 'Pending',
-      section: 'new_referral',
-      hospital_number: '',
+      status: 'new_referral',
+      subspecialty: null,
+      hospital_number: null,
       referral_date: null,
-      age: 0,
-      gender: '',
-      consultant: '',
-      history: '',
-      original_section: null
+      age: null,
+      gender: null,
+      consultant: null,
+      history: null
     });
   };
 
@@ -266,17 +357,17 @@ export default function CasesTable({
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDropOnSection = (e: React.DragEvent, section: string) => {
+  const handleDropOnSection = (e: React.DragEvent, section: string, subspecialty?: string) => {
     e.preventDefault();
     const caseId = e.dataTransfer.getData('text/plain');
     if (caseId && section !== 'completed') {
-      onDropOnSection(caseId, section);
+      onDropOnSection(caseId, section, subspecialty);
     }
   };
 
   const renderEditableCell = (caseItem: Case, field: keyof Case, value: string) => {
     const isEditing = editingCase === caseItem.id;
-    const isCompleted = caseItem.section === 'completed';
+    const isCompleted = caseItem.status === 'completed';
 
     if (!isEditing) {
       return <span className="font-medium">{value}</span>;
@@ -298,23 +389,7 @@ export default function CasesTable({
       );
     }
 
-    if (field === 'section') {
-      return (
-        <select
-          value={editingData.section || value}
-          onChange={(e) => setEditingData({ ...editingData, section: e.target.value })}
-          className="input-field text-sm"
-        >
-          <option value="new_referral">New Referrals</option>
-          <option value="awaiting_surgery">Awaiting Surgery</option>
-          <option value="hip_and_knee">Hip and Knee</option>
-          <option value="foot_and_ankle">Foot and Ankle</option>
-          <option value="shoulder_and_elbow">Shoulder and Elbow</option>
-          <option value="hand">Hand</option>
-          <option value="onward_referrals">Onward Referrals</option>
-        </select>
-      );
-    }
+
 
     if (field === 'gender') {
       return (
@@ -495,21 +570,22 @@ export default function CasesTable({
 
   return (
     <div className="overflow-x-auto">
-      {sectionOrder.map(section => {
-        const sectionCases = groupedCases[section] || [];
-        // Always show these sections even if empty
-        const alwaysVisibleSections = ['new_referral', 'awaiting_surgery', 'completed', 'hip_and_knee', 'foot_and_ankle', 'shoulder_and_elbow', 'hand', 'onward_referrals'];
-        if (sectionCases.length === 0 && !isAddingNew && !alwaysVisibleSections.includes(section)) return null;
+      {mainSectionOrder.map(mainSection => {
+        const sectionData = groupedCases[mainSection] || {};
+        const totalCases = Object.values(sectionData).flat().length;
+        
+        // Always show new_referral, completed, and subspecialty sections
+        if (totalCases === 0 && !isAddingNew && mainSection !== 'new_referral' && mainSection !== 'completed' && !['hip_and_knee', 'foot_and_ankle', 'shoulder_and_elbow', 'hand'].includes(mainSection)) return null;
 
         return (
-          <div key={section} className="mb-4">
-            {/* Section Header */}
+          <div key={mainSection} className="mb-6">
+            {/* Main Section Header */}
             <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
               <div className="flex justify-between items-center">
-                <h3 className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full border ${getSectionColor(section)}`}>
-                  {getSectionTitle(section)} ({sectionCases.length})
+                <h3 className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full border ${getMainSectionColor(mainSection)}`}>
+                  {getMainSectionTitle(mainSection)} ({totalCases})
                 </h3>
-                {section === 'new_referral' && (
+                {mainSection === 'new_referral' && (
                   <button
                     onClick={handleAddNewCase}
                     className="text-sm text-blue-600 hover:text-blue-800 font-medium"
@@ -520,135 +596,275 @@ export default function CasesTable({
               </div>
             </div>
 
-            {/* Section Table */}
-            <div 
-              onDragOver={section !== 'completed' ? handleDragOver : undefined}
-              onDrop={section !== 'completed' ? (e) => handleDropOnSection(e, section) : undefined}
-            >
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="table-header w-8"></th>
-                    <th className="table-header">Name</th>
-                    <th className="table-header">Hospital Number</th>
-                    <th className="table-header">Referral Date</th>
-                    <th className="table-header">Age</th>
-                    <th className="table-header">Gender</th>
-                    <th className="table-header">Consultant</th>
-                    <th className="table-header">Diagnosis</th>
-                    <th className="table-header">History</th>
-                    <th className="table-header">Outcome</th>
-                    <th className="table-header">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {/* New case row */}
-                  {section === 'new_referral' && renderNewCaseRow()}
-                  
-                  {sectionCases.map((caseItem) => (
-                    <tr 
-                      key={caseItem.id} 
-                      className="hover:bg-gray-50"
-                      draggable={section !== 'completed'}
-                      onDragStart={(e) => handleDragStart(e, caseItem)}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <td className="table-cell">
-                        {section !== 'completed' && (
-                          <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />
-                        )}
-                      </td>
-                      <td className="table-cell">
-                        {renderEditableCell(caseItem, 'name', caseItem.name)}
-                      </td>
-                      <td className="table-cell">
-                        {renderEditableCell(caseItem, 'hospital_number', caseItem.hospital_number)}
-                      </td>
-                      <td className="table-cell">
-                        {renderEditableCell(caseItem, 'referral_date', caseItem.referral_date ? new Date(caseItem.referral_date).toLocaleDateString() : '-')}
-                      </td>
-                      <td className="table-cell">
-                        {renderEditableCell(caseItem, 'age', caseItem.age.toString())}
-                      </td>
-                      <td className="table-cell">
-                        {renderEditableCell(caseItem, 'gender', caseItem.gender)}
-                      </td>
-                      <td className="table-cell">
-                        {renderEditableCell(caseItem, 'consultant', caseItem.consultant)}
-                      </td>
-                      <td className="table-cell">
-                        {renderEditableCell(caseItem, 'diagnosis', caseItem.diagnosis)}
-                      </td>
-                      <td className="table-cell">
-                        <div className="max-w-xs truncate" title={caseItem.history}>
-                          {renderEditableCell(caseItem, 'history', caseItem.history)}
-                        </div>
-                      </td>
-                      <td className="table-cell">
-                        {renderEditableCell(caseItem, 'outcome', caseItem.outcome)}
-                      </td>
-                      <td className="table-cell">
-                        <div className="flex space-x-2">
-                          {editingCase === caseItem.id ? (
-                            <>
-                              <button
-                                onClick={() => handleSave(caseItem.id)}
-                                className="text-green-600 hover:text-green-900"
-                                title="Save"
-                              >
-                                <Save className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={handleCancel}
-                                className="text-gray-600 hover:text-gray-900"
-                                title="Cancel"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => handleEdit(caseItem.id, caseItem)}
-                                className="text-blue-600 hover:text-blue-900"
-                                title="Edit"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              {section !== 'completed' && (
-                                <button
-                                  onClick={() => handleComplete(caseItem.id)}
-                                  className="text-green-600 hover:text-green-900"
-                                  title="Complete"
-                                >
-                                  <CheckCircle className="h-4 w-4" />
-                                </button>
+            {/* Status Groups */}
+            {mainSection === 'new_referral' || mainSection === 'completed' ? (
+              // For new_referral and completed sections, show all cases in a single table
+              <div className="mb-4">
+                <div 
+                  onDragOver={mainSection !== 'completed' ? handleDragOver : undefined}
+                  onDrop={mainSection !== 'completed' ? (e) => handleDropOnSection(e, mainSection) : undefined}
+                >
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="table-header w-8"></th>
+                        <th className="table-header">Name</th>
+                        <th className="table-header">Hospital Number</th>
+                        <th className="table-header">Referral Date</th>
+                        <th className="table-header">Age</th>
+                        <th className="table-header">Gender</th>
+                        <th className="table-header">Consultant</th>
+                        <th className="table-header">Diagnosis</th>
+                        <th className="table-header">History</th>
+                        <th className="table-header">Outcome</th>
+                        <th className="table-header">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {/* New case row - only show in new_referral */}
+                      {mainSection === 'new_referral' && renderNewCaseRow()}
+                      
+                      {Object.values(sectionData).flat().map((caseItem) => (
+                        <tr 
+                          key={caseItem.id} 
+                          className={getRowBackgroundColor(caseItem.status)}
+                          draggable={mainSection !== 'completed'}
+                          onDragStart={(e) => handleDragStart(e, caseItem)}
+                          onDragEnd={handleDragEnd}
+                        >
+                          <td className="table-cell">
+                            {mainSection !== 'completed' && (
+                              <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />
+                            )}
+                          </td>
+                          <td className="table-cell">
+                            {renderEditableCell(caseItem, 'name', caseItem.name)}
+                          </td>
+                          <td className="table-cell">
+                            {renderEditableCell(caseItem, 'hospital_number', caseItem.hospital_number || '')}
+                          </td>
+                          <td className="table-cell">
+                            {renderEditableCell(caseItem, 'referral_date', caseItem.referral_date ? new Date(caseItem.referral_date).toLocaleDateString() : '-')}
+                          </td>
+                          <td className="table-cell">
+                            {renderEditableCell(caseItem, 'age', caseItem.age?.toString() || '')}
+                          </td>
+                          <td className="table-cell">
+                            {renderEditableCell(caseItem, 'gender', caseItem.gender || '')}
+                          </td>
+                          <td className="table-cell">
+                            {renderEditableCell(caseItem, 'consultant', caseItem.consultant || '')}
+                          </td>
+                          <td className="table-cell">
+                            {renderEditableCell(caseItem, 'diagnosis', caseItem.diagnosis)}
+                          </td>
+                          <td className="table-cell">
+                            <div className="max-w-xs truncate" title={caseItem.history || ''}>
+                              {renderEditableCell(caseItem, 'history', caseItem.history || '')}
+                            </div>
+                          </td>
+                          <td className="table-cell">
+                            {renderEditableCell(caseItem, 'outcome', caseItem.outcome)}
+                          </td>
+                          <td className="table-cell">
+                            <div className="flex space-x-2">
+                              {editingCase === caseItem.id ? (
+                                <>
+                                  <button
+                                    onClick={() => handleSave(caseItem.id)}
+                                    className="text-green-600 hover:text-green-900"
+                                    title="Save"
+                                  >
+                                    <Save className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleCancel}
+                                    className="text-gray-600 hover:text-gray-900"
+                                    title="Cancel"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => handleEdit(caseItem.id, caseItem)}
+                                    className="text-blue-600 hover:text-blue-900"
+                                    title="Edit"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </button>
+                                  {mainSection !== 'completed' && (
+                                    <button
+                                      onClick={() => handleComplete(caseItem.id)}
+                                      className="text-green-600 hover:text-green-900"
+                                      title="Complete"
+                                    >
+                                      <CheckCircle className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                  {mainSection === 'completed' && (
+                                    <button
+                                      onClick={() => handleArchive(caseItem.id)}
+                                      className="text-gray-600 hover:text-gray-900"
+                                      title="Archive"
+                                    >
+                                      <Archive className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => handleDelete(caseItem.id)}
+                                    className="text-red-600 hover:text-red-900"
+                                    title="Delete"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </>
                               )}
-                              {section === 'completed' && (
-                                <button
-                                  onClick={() => handleArchive(caseItem.id)}
-                                  className="text-gray-600 hover:text-gray-900"
-                                  title="Archive"
-                                >
-                                  <Archive className="h-4 w-4" />
-                                </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              // For subspecialty sections, show all cases in a single table with row coloring
+              totalCases === 0 ? (
+                // Show empty state for subspecialty sections
+                <div className="mb-4">
+                  <div 
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDropOnSection(e, 'awaiting_surgery', mainSection)}
+                    className="p-8 text-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"
+                  >
+                    <p className="text-gray-500 text-sm">
+                      Drag cases here to assign to {getMainSectionTitle(mainSection)}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-4">
+                  <div 
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDropOnSection(e, 'awaiting_surgery', mainSection)}
+                  >
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="table-header w-8"></th>
+                          <th className="table-header">Name</th>
+                          <th className="table-header">Hospital Number</th>
+                          <th className="table-header">Referral Date</th>
+                          <th className="table-header">Age</th>
+                          <th className="table-header">Gender</th>
+                          <th className="table-header">Consultant</th>
+                          <th className="table-header">Diagnosis</th>
+                          <th className="table-header">History</th>
+                          <th className="table-header">Outcome</th>
+                          <th className="table-header">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {Object.values(sectionData).flat().map((caseItem) => (
+                          <tr 
+                            key={caseItem.id} 
+                            className={getRowBackgroundColor(caseItem.status)}
+                            draggable={caseItem.status !== 'completed'}
+                            onDragStart={(e) => handleDragStart(e, caseItem)}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <td className="table-cell">
+                              {caseItem.status !== 'completed' && (
+                                <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />
                               )}
-                              <button
-                                onClick={() => handleDelete(caseItem.id)}
-                                className="text-red-600 hover:text-red-900"
-                                title="Delete"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                            </td>
+                            <td className="table-cell">
+                              {renderEditableCell(caseItem, 'name', caseItem.name)}
+                            </td>
+                            <td className="table-cell">
+                              {renderEditableCell(caseItem, 'hospital_number', caseItem.hospital_number || '')}
+                            </td>
+                            <td className="table-cell">
+                              {renderEditableCell(caseItem, 'referral_date', caseItem.referral_date ? new Date(caseItem.referral_date).toLocaleDateString() : '-')}
+                            </td>
+                            <td className="table-cell">
+                              {renderEditableCell(caseItem, 'age', caseItem.age?.toString() || '')}
+                            </td>
+                            <td className="table-cell">
+                              {renderEditableCell(caseItem, 'gender', caseItem.gender || '')}
+                            </td>
+                            <td className="table-cell">
+                              {renderEditableCell(caseItem, 'consultant', caseItem.consultant || '')}
+                            </td>
+                            <td className="table-cell">
+                              {renderEditableCell(caseItem, 'diagnosis', caseItem.diagnosis)}
+                            </td>
+                            <td className="table-cell">
+                              <div className="max-w-xs truncate" title={caseItem.history || ''}>
+                                {renderEditableCell(caseItem, 'history', caseItem.history || '')}
+                              </div>
+                            </td>
+                            <td className="table-cell">
+                              {renderEditableCell(caseItem, 'outcome', caseItem.outcome)}
+                            </td>
+                            <td className="table-cell">
+                              <div className="flex space-x-2">
+                                {editingCase === caseItem.id ? (
+                                  <>
+                                    <button
+                                      onClick={() => handleSave(caseItem.id)}
+                                      className="text-green-600 hover:text-green-900"
+                                      title="Save"
+                                    >
+                                      <Save className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleCancel}
+                                      className="text-gray-600 hover:text-gray-900"
+                                      title="Cancel"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => handleEdit(caseItem.id, caseItem)}
+                                      className="text-blue-600 hover:text-blue-900"
+                                      title="Edit"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </button>
+                                    {caseItem.status !== 'completed' && (
+                                      <button
+                                        onClick={() => handleComplete(caseItem.id)}
+                                        className="text-green-600 hover:text-green-900"
+                                        title="Complete"
+                                      >
+                                        <CheckCircle className="h-4 w-4" />
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => handleDelete(caseItem.id)}
+                                      className="text-red-600 hover:text-red-900"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )
+            )}
           </div>
         );
       })}

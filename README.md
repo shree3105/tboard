@@ -6,13 +6,14 @@ A modern, responsive React.js frontend for the Trauma Board API, built with Next
 
 ### 🎯 **Single-Page Design**
 - **Unified Interface**: All functionality in one comprehensive view
-- **Section-Based Organization**: Cases automatically sorted by section (New Referrals, On List, Scheduled)
+- **Status-Based Organization**: Cases automatically sorted by workflow status (New Referrals, Awaiting Surgery, On List, Completed)
+- **Subspecialty Tracking**: Separate tracking of anatomical subspecialty (Hip & Knee, Foot & Ankle, Shoulder & Elbow, Hand)
 - **Real-time Updates**: Live synchronization with the backend API
 
 ### 📊 **Smart Case Management**
 - **Inline Editing**: Edit any case field directly in the table
 - **Drag & Drop**: Drag cases from the table to the calendar to schedule surgeries
-- **Section Transitions**: Automatic section changes when scheduling (New Referral → On List)
+- **Status & Subspecialty**: Separate tracking of workflow status and anatomical subspecialty
 - **Flexible Schema**: Supports additional columns when you extend the API
 
 ### 📅 **Horizontal Calendar**
