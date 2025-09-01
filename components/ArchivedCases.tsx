@@ -1,6 +1,6 @@
 'use client';
 
-import { Case } from '@/lib/types';
+import { Case, CaseSubspecialty } from '@/lib/types';
 import { Trash2 } from 'lucide-react';
 
 interface ArchivedCasesProps {
@@ -22,18 +22,10 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
     }
   };
 
-  const getSectionTitle = (section: string | null) => {
+  const getSectionTitle = (section: CaseSubspecialty | null | undefined) => {
     if (!section) return 'Unknown';
     
     switch (section) {
-      case 'new_referral':
-        return 'New Referrals';
-      case 'awaiting_surgery':
-        return 'Awaiting Surgery';
-      case 'completed':
-        return 'Completed';
-      case 'on_list':
-        return 'On List';
       case 'hip_and_knee':
         return 'Hip and Knee';
       case 'foot_and_ankle':
@@ -42,25 +34,21 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
         return 'Shoulder and Elbow';
       case 'hand':
         return 'Hand';
-      case 'onward_referrals':
-        return 'Onward Referrals';
+      case 'spine':
+        return 'Spine';
+      case 'trauma':
+        return 'Trauma';
+      case 'sports':
+        return 'Sports';
       default:
         return section.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
   };
 
-  const getSectionColor = (section: string | null) => {
+  const getSectionColor = (section: CaseSubspecialty | null | undefined) => {
     if (!section) return 'bg-gray-100 text-gray-800 border-gray-200';
     
     switch (section) {
-      case 'new_referral':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'awaiting_surgery':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'completed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'on_list':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'hip_and_knee':
         return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       case 'foot_and_ankle':
@@ -69,8 +57,12 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'hand':
         return 'bg-teal-100 text-teal-800 border-teal-200';
-      case 'onward_referrals':
+      case 'spine':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'trauma':
         return 'bg-red-100 text-red-800 border-red-200';
+      case 'sports':
+        return 'bg-green-100 text-green-800 border-green-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
