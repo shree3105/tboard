@@ -46,7 +46,16 @@ export default function SingleDayCalendar({
   const [draggedCaseData, setDraggedCaseData] = useState<any>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [editingSession, setEditingSession] = useState<string | null>(null);
-  const [editSessionData, setEditSessionData] = useState<any>(null);
+  const [editSessionData, setEditSessionData] = useState<{
+    theatre_id: string;
+    session_date: string;
+    session_type: SessionType;
+    start_time: string;
+    end_time: string;
+    consultant_id: string | null;
+    anaesthetist_id: string | null;
+    notes: string;
+  } | null>(null);
   
   // Reordering state
   const [reorderingSession, setReorderingSession] = useState<string | null>(null);
@@ -80,7 +89,16 @@ export default function SingleDayCalendar({
     loadConsultantsAndAnaesthetists();
   }, []);
 
-  const [newSessionData, setNewSessionData] = useState({
+  const [newSessionData, setNewSessionData] = useState<{
+    theatre_id: string;
+    session_date: string;
+    session_type: SessionType;
+    start_time: string;
+    end_time: string;
+    consultant_id: string | null;
+    anaesthetist_id: string | null;
+    notes: string;
+  }>({
     theatre_id: '',
     session_date: format(new Date(), 'yyyy-MM-dd'),
     session_type: 'morning' as SessionType,
@@ -361,8 +379,8 @@ export default function SingleDayCalendar({
       session_type: session.session_type,
       start_time: session.start_time,
       end_time: session.end_time,
-      consultant_id: session.consultant_id,
-      anaesthetist_id: session.anaesthetist_id,
+      consultant_id: session.consultant_id || null,
+      anaesthetist_id: session.anaesthetist_id || null,
       notes: session.notes || ''
     });
   };
@@ -748,7 +766,7 @@ export default function SingleDayCalendar({
                 <label className="block text-xs font-medium text-gray-700 mb-1">Theatre</label>
                 <select
                   value={editSessionData.theatre_id}
-                  onChange={(e) => setEditSessionData(prev => ({ ...prev, theatre_id: e.target.value }))}
+                  onChange={(e) => setEditSessionData(prev => prev ? { ...prev, theatre_id: e.target.value } : null)}
                   className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
                 >
                   <option value="">Select Theatre</option>
@@ -762,7 +780,7 @@ export default function SingleDayCalendar({
                 <label className="block text-xs font-medium text-gray-700 mb-1">Session Type</label>
                 <select
                   value={editSessionData.session_type}
-                  onChange={(e) => setEditSessionData(prev => ({ ...prev, session_type: e.target.value as SessionType }))}
+                  onChange={(e) => setEditSessionData(prev => prev ? { ...prev, session_type: e.target.value as SessionType } : null)}
                   className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
                 >
                   <option value="morning">Morning</option>
@@ -779,7 +797,7 @@ export default function SingleDayCalendar({
                   <input
                     type="time"
                     value={editSessionData.start_time}
-                    onChange={(e) => setEditSessionData(prev => ({ ...prev, start_time: e.target.value }))}
+                    onChange={(e) => setEditSessionData(prev => prev ? { ...prev, start_time: e.target.value } : null)}
                     className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
                   />
                 </div>
@@ -788,7 +806,7 @@ export default function SingleDayCalendar({
                   <input
                     type="time"
                     value={editSessionData.end_time}
-                    onChange={(e) => setEditSessionData(prev => ({ ...prev, end_time: e.target.value }))}
+                    onChange={(e) => setEditSessionData(prev => prev ? { ...prev, end_time: e.target.value } : null)}
                     className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
                   />
                 </div>
@@ -798,7 +816,7 @@ export default function SingleDayCalendar({
                 <label className="block text-xs font-medium text-gray-700 mb-1">Consultant (Optional)</label>
                 <select
                   value={editSessionData.consultant_id || ''}
-                  onChange={(e) => setEditSessionData(prev => ({ ...prev, consultant_id: e.target.value || null }))}
+                  onChange={(e) => setEditSessionData(prev => prev ? { ...prev, consultant_id: e.target.value || null } : null)}
                   className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
                 >
                   <option value="">Select Consultant</option>
@@ -814,7 +832,7 @@ export default function SingleDayCalendar({
                 <label className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
                 <textarea
                   value={editSessionData.notes}
-                  onChange={(e) => setEditSessionData(prev => ({ ...prev, notes: e.target.value }))}
+                  onChange={(e) => setEditSessionData(prev => prev ? { ...prev, notes: e.target.value } : null)}
                   className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
                   rows={2}
                   placeholder="Session notes"

@@ -41,7 +41,7 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
       case 'sports':
         return 'Sports';
       default:
-        return section.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        return String(section).replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
     }
   };
 

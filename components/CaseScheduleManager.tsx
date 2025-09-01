@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { CaseSchedule, CaseScheduleCreate, ScheduleStatus } from '@/lib/types';
-import { apiClient } from '@/lib/api';
+import apiClient from '@/lib/api';
 
 interface CaseScheduleManagerProps {
   caseId: string;
@@ -33,12 +33,12 @@ export default function CaseScheduleManager({
       setLoading(true);
       setError(null);
       
-      const response = await apiClient.getSchedules({
-        case_id: caseId,
-        session_id: sessionId
-      });
-      
-      setSchedules(response.data || []);
+             const response = await apiClient.getSchedules({
+         case_id: caseId,
+         session_id: sessionId
+       });
+       
+       setSchedules(response || []);
     } catch (err) {
       setError('Failed to load schedules');
       console.error('Error loading schedules:', err);

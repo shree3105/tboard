@@ -333,8 +333,8 @@ export default function CasesTable({
     setEditingCase(caseId);
     setEditingData({
       name: caseItem.name,
-      diagnosis: caseItem.diagnosis,
-      outcome: caseItem.outcome,
+      diagnosis: caseItem.diagnosis || undefined,
+      outcome: caseItem.outcome || undefined,
       status: caseItem.status,
       subspecialty: caseItem.subspecialty,
       hospital_number: caseItem.hospital_number,
@@ -524,7 +524,7 @@ export default function CasesTable({
         <td className="table-cell">
           <select
             value={newCaseData.gender || ''}
-            onChange={(e) => setNewCaseData(prev => ({ ...prev, gender: e.target.value }))}
+            onChange={(e) => setNewCaseData(prev => ({ ...prev, gender: e.target.value as GenderType }))}
             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="">Select</option>
@@ -782,7 +782,7 @@ export default function CasesTable({
                                     {renderEditableCell(caseItem, 'consultant_id', getConsultantDisplayName(caseItem))}
                                   </td>
                                   <td className="table-cell">
-                                    {renderEditableCell(caseItem, 'diagnosis', caseItem.diagnosis)}
+                                    {renderEditableCell(caseItem, 'diagnosis', caseItem.diagnosis || '')}
                                   </td>
                                   <td className="table-cell">
                                     <div className="max-w-xs truncate" title={caseItem.patient_history || ''}>
@@ -790,7 +790,7 @@ export default function CasesTable({
                                     </div>
                                   </td>
                                   <td className="table-cell">
-                                    {renderEditableCell(caseItem, 'outcome', caseItem.outcome)}
+                                    {renderEditableCell(caseItem, 'outcome', caseItem.outcome || '')}
                                   </td>
                                   <td className="table-cell">
                                     <div className="flex space-x-2">
@@ -905,7 +905,7 @@ export default function CasesTable({
                             {renderEditableCell(caseItem, 'consultant_id', getConsultantDisplayName(caseItem))}
                           </td>
                           <td className="table-cell text-xs py-1">
-                            {renderEditableCell(caseItem, 'diagnosis', caseItem.diagnosis)}
+                            {renderEditableCell(caseItem, 'diagnosis', caseItem.diagnosis || '')}
                           </td>
                           <td className="table-cell text-xs py-1">
                             <div className="max-w-xs truncate" title={caseItem.patient_history || ''}>
@@ -913,7 +913,7 @@ export default function CasesTable({
                             </div>
                           </td>
                           <td className="table-cell text-xs py-1">
-                            {renderEditableCell(caseItem, 'outcome', caseItem.outcome)}
+                            {renderEditableCell(caseItem, 'outcome', caseItem.outcome || '')}
                           </td>
                           <td className="table-cell text-xs py-1">
                             <div className="flex space-x-2">
