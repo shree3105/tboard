@@ -140,10 +140,17 @@ export default function ArchivedCases({ cases, onDeleteCase, loading = false }: 
                    </td>
                    <td className="table-cell">{caseItem.age || '-'}</td>
                    <td className="table-cell">{caseItem.gender || '-'}</td>
-                   <td className="table-cell">{caseItem.consultant || '-'}</td>
                    <td className="table-cell">
-                     <div className="max-w-xs truncate" title={caseItem.history || ''}>
-                       {caseItem.history || '-'}
+                     {caseItem.consultant?.first_name && caseItem.consultant?.last_name 
+                       ? `${caseItem.consultant.first_name} ${caseItem.consultant.last_name}`
+                       : caseItem.consultant_id 
+                         ? `Consultant ${caseItem.consultant_id.slice(0, 8)}...`
+                         : '-'
+                     }
+                   </td>
+                   <td className="table-cell">
+                     <div className="max-w-xs truncate" title={caseItem.patient_history || ''}>
+                       {caseItem.patient_history || '-'}
                      </div>
                    </td>
                   <td className="table-cell">
