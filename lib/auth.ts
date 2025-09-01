@@ -1,134 +1,164 @@
-import { authAPI } from './api';
-import { LoginRequest, RegisterRequest } from './types';
+import apiClient from './api';
+import { User, UserLogin, UserCreate, LoginResponse, TokenResponse, UserRole } from './types';
 
-// Token validation helper
-const isValidToken = (token: string): boolean => {
-  try {
-    // Basic JWT structure validation
-    const parts = token.split('.');
-    if (parts.length !== 3) return false;
-    
-    // Check if token is not expired (basic check)
-    const payload = JSON.parse(atob(parts[1]));
-    const now = Math.floor(Date.now() / 1000);
-    
-    if (payload.exp && payload.exp < now) {
-      console.warn('Token has expired');
-      return false;
+class AuthService {
+  private user: User | null = null;
+  private tokenRefreshTimer: NodeJS.Timeout | null = null;
+
+  async login(credentials: UserLogin): Promise<User> {
+    try {
+      // Use the login-with-user endpoint to get both token and user info
+      const response: TokenResponse = await apiClient.loginWithUser(credentials);
+      console.log('Auth service login response:', response); // Debug log
+      
+      // Store token and user data
+      apiClient.setAuthToken(response.access_token);
+      apiClient.setUser(response.user);
+      this.user = response.user;
+      
+      // Set up token refresh
+      this.setupTokenRefresh();
+      
+      return response.user;
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
     }
-    
-    return true;
-  } catch (error) {
-    console.error('Token validation error:', error);
-    return false;
   }
-};
 
-export const auth = {
-  login: async (credentials: LoginRequest) => {
+  async register(userData: UserCreate): Promise<User> {
     try {
-      const response = await authAPI.login(credentials);
-      if (typeof window !== 'undefined' && response.access_token) {
-        // Validate token before storing
-        if (isValidToken(response.access_token)) {
-          localStorage.setItem('access_token', response.access_token);
-          // Store login timestamp for session management
-          localStorage.setItem('login_timestamp', Date.now().toString());
-        } else {
-          throw new Error('Invalid token received from server');
-        }
-      }
+      const response: User = await apiClient.register(userData);
+      console.log('Auth service register response:', response); // Debug log
+      
+      // For registration, we don't get a token, so we need to login after registration
+      // Store user data but don't set up token refresh yet
+      apiClient.setUser(response);
+      this.user = response;
+      
       return response;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Registration failed:', error);
       throw error;
     }
-  },
+  }
 
-  register: async (userData: RegisterRequest) => {
+  async refreshToken(): Promise<void> {
     try {
-      const response = await authAPI.register(userData);
-      return response;
+      const response: TokenResponse = await apiClient.refreshToken();
+      
+      // Update stored token and user data
+      apiClient.setAuthToken(response.access_token);
+      apiClient.setUser(response.user);
+      this.user = response.user;
+      
+      // Reset token refresh timer
+      this.setupTokenRefresh();
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Token refresh failed:', error);
+      this.logout();
       throw error;
     }
-  },
+  }
 
-  logout: () => {
+  logout(): void {
+    // Clear stored data
+    apiClient.removeAuthToken();
+    this.user = null;
+    
+    // Clear refresh timer
+    if (this.tokenRefreshTimer) {
+      clearTimeout(this.tokenRefreshTimer);
+      this.tokenRefreshTimer = null;
+    }
+    
+    // Redirect to login
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('login_timestamp');
-      // Clear any other auth-related data
-      sessionStorage.clear();
       window.location.href = '/login';
     }
-  },
+  }
 
-  getToken: (): string | null => {
+  getUser(): User | null {
+    if (!this.user) {
+      this.user = apiClient.getUser();
+    }
+    return this.user;
+  }
+
+  isAuthenticated(): boolean {
+    return apiClient.isAuthenticated();
+  }
+
+  hasRole(requiredRole: UserRole): boolean {
+    return apiClient.hasRole(requiredRole);
+  }
+
+  hasAnyRole(roles: UserRole[]): boolean {
+    return roles.some(role => this.hasRole(role));
+  }
+
+  isAdmin(): boolean {
+    return this.hasRole('admin');
+  }
+
+  isConsultant(): boolean {
+    return this.hasRole('consultant');
+  }
+
+  isNurse(): boolean {
+    return this.hasRole('nurse');
+  }
+
+  isAnaesthetist(): boolean {
+    return this.hasRole('anaesthetist');
+  }
+
+  isViewer(): boolean {
+    return this.hasRole('viewer');
+  }
+
+  canEditCases(): boolean {
+    return this.hasAnyRole(['admin', 'consultant', 'nurse']);
+  }
+
+  canScheduleCases(): boolean {
+    return this.hasAnyRole(['admin', 'consultant']);
+  }
+
+  canManageUsers(): boolean {
+    return this.isAdmin();
+  }
+
+  canViewAuditLogs(): boolean {
+    return this.isAdmin();
+  }
+
+  private setupTokenRefresh(): void {
+    // Clear existing timer
+    if (this.tokenRefreshTimer) {
+      clearTimeout(this.tokenRefreshTimer);
+    }
+    
+    // Set up refresh 5 minutes before token expires (assuming 30-minute expiry)
+    const refreshTime = 25 * 60 * 1000; // 25 minutes
+    this.tokenRefreshTimer = setTimeout(() => {
+      this.refreshToken().catch(error => {
+        console.error('Automatic token refresh failed:', error);
+        this.logout();
+      });
+    }, refreshTime);
+  }
+
+  // Initialize auth state on app startup
+  initialize(): void {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
-      if (token && isValidToken(token)) {
-        return token;
-      } else if (token) {
-        // Token is invalid, clear it
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('login_timestamp');
+      const user = this.getUser();
+      if (user && this.isAuthenticated()) {
+        this.setupTokenRefresh();
       }
     }
-    return null;
-  },
+  }
+}
 
-  isAuthenticated: (): boolean => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
-      if (!token) return false;
-      
-      // Check if token is valid
-      if (!isValidToken(token)) {
-        // Clear invalid token
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('login_timestamp');
-        return false;
-      }
-      
-      // Optional: Check session timeout (24 hours)
-      const loginTimestamp = localStorage.getItem('login_timestamp');
-      if (loginTimestamp) {
-        const loginTime = parseInt(loginTimestamp);
-        const now = Date.now();
-        const sessionTimeout = 24 * 60 * 60 * 1000; // 24 hours
-        
-        if (now - loginTime > sessionTimeout) {
-          console.warn('Session expired');
-          auth.logout();
-          return false;
-        }
-      }
-      
-      return true;
-    }
-    return false;
-  },
-
-  // Get user info from token (if available)
-  getUserInfo: () => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          return {
-            userId: payload.sub || payload.user_id,
-            email: payload.email,
-            exp: payload.exp
-          };
-        } catch (error) {
-          console.error('Error parsing token payload:', error);
-          return null;
-        }
-      }
-    }
-    return null;
-  },
-};
+export const auth = new AuthService();
+export default auth;

@@ -100,6 +100,69 @@ NEXT_PUBLIC_API_KEY=your_api_key_here
    npm run dev
    ```
 
+## 🚀 **Deployment**
+
+### **Vercel Deployment (Recommended)**
+
+This project is configured for easy deployment on Vercel through GitHub integration.
+
+#### **Automatic Deployment Setup:**
+
+1. **Push to GitHub**:
+   ```bash
+   git add .
+   git commit -m "Prepare for Vercel deployment"
+   git push origin main
+   ```
+
+2. **Connect to Vercel**:
+   - Go to [vercel.com](https://vercel.com)
+   - Sign up/Login with your GitHub account
+   - Click "New Project"
+   - Import your GitHub repository
+   - Vercel will automatically detect Next.js configuration
+
+3. **Environment Variables**:
+   In your Vercel project settings, add these environment variables:
+   ```
+   NEXT_PUBLIC_API_URL=https://trauma-board-api.onrender.com
+   NEXT_PUBLIC_WS_URL=wss://trauma-board-api.onrender.com/ws
+   ```
+
+4. **Deploy**:
+   - Vercel will automatically build and deploy on every push to main
+   - Preview deployments are created for pull requests
+
+#### **Manual Deployment**:
+   ```bash
+   # Install Vercel CLI
+   npm i -g vercel
+   
+   # Deploy
+   vercel
+   ```
+
+### **Other Deployment Options**
+
+#### **Static Export**:
+   ```bash
+   npm run build
+   npm run export
+   ```
+
+#### **Docker Deployment**:
+   ```dockerfile
+   FROM node:18-alpine
+   WORKDIR /app
+   COPY package*.json ./
+   RUN npm ci --only=production
+   COPY . .
+   RUN npm run build
+   EXPOSE 3000
+   CMD ["npm", "start"]
+   ```
+   ```
+
 5. **Open your browser**:
    Navigate to `http://localhost:3000`
 

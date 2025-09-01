@@ -1,159 +1,5281 @@
-Authentication
-Login
-
-Endpoint: POST /users/login
-
-Request Body:
-
 {
-  "email": "user@example.com",
-  "password": "password123"
-}
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Trauma Board API v2.0",
+    "description": "Comprehensive trauma board management system with real-time updates, theatre scheduling, and analytics",
+    "version": "2.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Health check endpoint",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "description": "Root endpoint with API information",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RootResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Register",
+        "operationId": "register_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login",
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login-with-user": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login With User",
+        "description": "Login and return user information along with token",
+        "operationId": "login_with_user_auth_login_with_user_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/consultants": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get Consultants",
+        "description": "Get all consultants for session assignment",
+        "operationId": "get_consultants_auth_consultants_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserSimple"
+                  },
+                  "type": "array",
+                  "title": "Response Get Consultants Auth Consultants Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/anaesthetists": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get Anaesthetists",
+        "description": "Get all anaesthetists for session assignment",
+        "operationId": "get_anaesthetists_auth_anaesthetists_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserSimple"
+                  },
+                  "type": "array",
+                  "title": "Response Get Anaesthetists Auth Anaesthetists Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/by-role/{role}": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get Users By Role",
+        "description": "Get all users with a specific role",
+        "operationId": "get_users_by_role_auth_by_role__role__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Role"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSimple"
+                  },
+                  "title": "Response Get Users By Role Auth By Role  Role  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/": {
+      "post": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Create Case",
+        "description": "Create a new case",
+        "operationId": "create_case_cases__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Case"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Get Cases",
+        "description": "Get cases with filtering and pagination",
+        "operationId": "get_cases_cases__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "subspecialty",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Subspecialty"
+            }
+          },
+          {
+            "name": "consultant_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Consultant Id"
+            }
+          },
+          {
+            "name": "theatre_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Theatre Id"
+            }
+          },
+          {
+            "name": "surgery_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Surgery Date"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Archived"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_Case_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}": {
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Get Case",
+        "description": "Get a specific case by ID",
+        "operationId": "get_case_cases__case_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Case"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Update Case",
+        "description": "Update a case",
+        "operationId": "update_case_cases__case_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Case"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Delete Case",
+        "description": "Delete a case",
+        "operationId": "delete_case_cases__case_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/search": {
+      "post": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Search Cases",
+        "description": "Search cases using full-text search",
+        "operationId": "search_cases_cases_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/cases/bulk": {
+      "post": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Bulk Update Cases",
+        "description": "Bulk update multiple cases",
+        "operationId": "bulk_update_cases_cases_bulk_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkUpdateRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/BulkUpdateRequestLegacy"
+                  }
+                ],
+                "title": "Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/cases/reorder": {
+      "post": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Reorder Cases",
+        "description": "Reorder cases in calendar view",
+        "operationId": "reorder_cases_cases_reorder_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReorderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/cases/{case_id}/archive": {
+      "post": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Archive Case",
+        "description": "Archive a case",
+        "operationId": "archive_case_cases__case_id__archive_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/unarchive": {
+      "post": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Unarchive Case",
+        "description": "Unarchive a case",
+        "operationId": "unarchive_case_cases__case_id__unarchive_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/calendar/{date_str}": {
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Get Calendar Cases",
+        "description": "Get cases for a specific date range (Saturday to Friday)",
+        "operationId": "get_calendar_cases_cases_calendar__date_str__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date_str",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Date Str"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CalendarDateResponse"
+                  },
+                  "title": "Response Get Calendar Cases Cases Calendar  Date Str  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/next-order-index/{theatre_id}": {
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Get Next Order Index",
+        "description": "Get the next available order index for a theatre on a specific date",
+        "operationId": "get_next_order_index_cases_next_order_index__theatre_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "theatre_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Theatre Id"
+            }
+          },
+          {
+            "name": "surgery_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Surgery Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NextOrderIndexResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/theatres/": {
+      "get": {
+        "tags": [
+          "Theatres"
+        ],
+        "summary": "Get Theatres",
+        "description": "Get all theatres",
+        "operationId": "get_theatres_theatres__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Theatre"
+                  },
+                  "type": "array",
+                  "title": "Response Get Theatres Theatres  Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Theatres"
+        ],
+        "summary": "Create Theatre",
+        "description": "Create a new theatre",
+        "operationId": "create_theatre_theatres__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TheatreCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Theatre"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/theatres/{theatre_id}": {
+      "get": {
+        "tags": [
+          "Theatres"
+        ],
+        "summary": "Get Theatre",
+        "description": "Get a specific theatre by ID",
+        "operationId": "get_theatre_theatres__theatre_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "theatre_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Theatre Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Theatre"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Theatres"
+        ],
+        "summary": "Update Theatre",
+        "description": "Update a theatre",
+        "operationId": "update_theatre_theatres__theatre_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "theatre_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Theatre Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TheatreUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Theatre"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Theatres"
+        ],
+        "summary": "Delete Theatre",
+        "description": "Delete a theatre",
+        "operationId": "delete_theatre_theatres__theatre_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "theatre_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Theatre Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions/": {
+      "post": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Create Session",
+        "description": "Create a new theatre session",
+        "operationId": "create_session_sessions__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TheatreSessionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TheatreSession"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Get Sessions",
+        "description": "Get theatre sessions with optional filtering",
+        "operationId": "get_sessions_sessions__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "theatre_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Theatre Id"
+            }
+          },
+          {
+            "name": "session_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session Date"
+            }
+          },
+          {
+            "name": "session_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TheatreSession"
+                  },
+                  "title": "Response Get Sessions Sessions  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions/{session_id}": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Get Session",
+        "description": "Get a specific theatre session by ID",
+        "operationId": "get_session_sessions__session_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TheatreSession"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Update Session",
+        "description": "Update a theatre session",
+        "operationId": "update_session_sessions__session_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TheatreSessionUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TheatreSession"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Delete Session",
+        "description": "Delete a theatre session",
+        "operationId": "delete_session_sessions__session_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedules/": {
+      "post": {
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "Create Schedule",
+        "description": "Create a new case schedule",
+        "operationId": "create_schedule_schedules__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseScheduleCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseSchedule"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "Get Schedules",
+        "description": "Get case schedules with optional filtering",
+        "operationId": "get_schedules_schedules__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "theatre_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Theatre Id"
+            }
+          },
+          {
+            "name": "scheduled_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scheduled Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CaseSchedule"
+                  },
+                  "title": "Response Get Schedules Schedules  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedules/{schedule_id}": {
+      "get": {
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "Get Schedule",
+        "description": "Get a specific case schedule by ID",
+        "operationId": "get_schedule_schedules__schedule_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "schedule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Schedule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseSchedule"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "Update Schedule",
+        "description": "Update a case schedule",
+        "operationId": "update_schedule_schedules__schedule_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "schedule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Schedule Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseScheduleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseSchedule"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "Delete Schedule",
+        "description": "Delete a case schedule",
+        "operationId": "delete_schedule_schedules__schedule_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "schedule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Schedule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedules/cleanup": {
+      "post": {
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "Cleanup Schedules",
+        "description": "Clean up orphaned schedules and validate consistency",
+        "operationId": "cleanup_schedules_schedules_cleanup_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/schedules/reorder": {
+      "post": {
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "Reorder Schedules",
+        "description": "Reorder case schedules within a session",
+        "operationId": "reorder_schedules_schedules_reorder_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array",
+                "title": "Schedule Orders"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CaseSchedule"
+                  },
+                  "type": "array",
+                  "title": "Response Reorder Schedules Schedules Reorder Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get Users",
+        "description": "Get all users (admin only)",
+        "operationId": "get_users_admin_users_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  },
+                  "type": "array",
+                  "title": "Response Get Users Admin Users Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create User",
+        "description": "Create a new user (admin only)",
+        "operationId": "create_user_admin_users_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/users/{user_id}": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update User",
+        "description": "Update a user (admin only)",
+        "operationId": "update_user_admin_users__user_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete User",
+        "description": "Delete a user (admin only)",
+        "operationId": "delete_user_admin_users__user_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/department-settings": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get Department Settings",
+        "description": "Get department settings (admin only)",
+        "operationId": "get_department_settings_admin_department_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartmentSetting"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update Department Settings",
+        "description": "Update department settings (admin only)",
+        "operationId": "update_department_settings_admin_department_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepartmentSettingUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartmentSetting"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/system-stats": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get System Stats",
+        "description": "Get system statistics (admin only)",
+        "operationId": "get_system_stats_admin_system_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/analytics/case-statistics": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Get Case Statistics",
+        "description": "Get case statistics with optional date filtering",
+        "operationId": "get_case_statistics_analytics_case_statistics_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseStatisticsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/subspecialty-statistics": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Get Subspecialty Statistics",
+        "description": "Get subspecialty statistics with optional date filtering",
+        "operationId": "get_subspecialty_statistics_analytics_subspecialty_statistics_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubspecialtyStatisticsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/consultant-workload": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Get Consultant Workload",
+        "description": "Get consultant workload statistics with optional date filtering",
+        "operationId": "get_consultant_workload_analytics_consultant_workload_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConsultantWorkloadResponse"
+                  },
+                  "title": "Response Get Consultant Workload Analytics Consultant Workload Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/theatre-utilization": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Get Theatre Utilization",
+        "description": "Get theatre utilization statistics with optional date filtering",
+        "operationId": "get_theatre_utilization_analytics_theatre_utilization_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TheatreUtilizationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/trends": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Get Trends",
+        "description": "Get trend analysis with specified period",
+        "operationId": "get_trends_analytics_trends_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(day|week|month|quarter|year)$",
+              "default": "month",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrendsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ws/status": {
+      "get": {
+        "summary": "Get Websocket Status",
+        "description": "Get WebSocket connection status",
+        "operationId": "get_websocket_status_ws_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebSocketStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ws/health": {
+      "get": {
+        "tags": [
+          "WebSocket"
+        ],
+        "summary": "Websocket Health Check",
+        "description": "Health check for WebSocket service",
+        "operationId": "websocket_health_check_ws_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats": {
+      "get": {
+        "summary": "Get Api Statistics",
+        "description": "Get API usage statistics",
+        "operationId": "get_api_statistics_api_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiStatsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiStatsResponse": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "API version"
+          },
+          "uptime": {
+            "type": "string",
+            "title": "Uptime",
+            "description": "API uptime"
+          },
+          "total_requests": {
+            "type": "integer",
+            "title": "Total Requests",
+            "description": "Total number of requests"
+          },
+          "websocket_connections": {
+            "type": "integer",
+            "title": "Websocket Connections",
+            "description": "Number of WebSocket connections"
+          },
+          "active_users": {
+            "type": "integer",
+            "title": "Active Users",
+            "description": "Number of active users"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp",
+            "description": "Current timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "uptime",
+          "total_requests",
+          "websocket_connections",
+          "active_users",
+          "timestamp"
+        ],
+        "title": "ApiStatsResponse"
+      },
+      "BulkCaseUpdate": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "Case identifier"
+          },
+          "surgery_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Surgery Date",
+            "description": "Surgery date in YYYY-MM-DD format"
+          },
+          "order_index": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Index",
+            "description": "Order index for sorting"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "description": "Case status"
+          },
+          "subspecialty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subspecialty",
+            "description": "Case subspecialty"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority",
+            "description": "Case priority"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "BulkCaseUpdate"
+      },
+      "BulkUpdateRequest": {
+        "properties": {
+          "updates": {
+            "items": {
+              "$ref": "#/components/schemas/BulkCaseUpdate"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Updates",
+            "description": "List of case updates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "updates"
+        ],
+        "title": "BulkUpdateRequest"
+      },
+      "BulkUpdateRequestLegacy": {
+        "properties": {
+          "case_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid4"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Case Ids",
+            "description": "List of case IDs to update"
+          },
+          "updates": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Updates",
+            "description": "Updates to apply to all cases"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_ids",
+          "updates"
+        ],
+        "title": "BulkUpdateRequestLegacy"
+      },
+      "BulkUpdateResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Success message"
+          },
+          "updated_count": {
+            "type": "integer",
+            "title": "Updated Count",
+            "description": "Number of cases updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message",
+          "updated_count"
+        ],
+        "title": "BulkUpdateResponse"
+      },
+      "CalendarDateResponse": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date",
+            "description": "Date in YYYY-MM-DD format"
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/Case"
+            },
+            "type": "array",
+            "title": "Cases",
+            "description": "Cases for this date"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of cases"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "cases",
+          "count"
+        ],
+        "title": "CalendarDateResponse"
+      },
+      "Case": {
+        "properties": {
+          "hospital_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hospital Number",
+            "description": "Hospital patient number"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Patient name"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 150,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age",
+            "description": "Patient age"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GenderType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Patient gender"
+          },
+          "diagnosis": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnosis",
+            "description": "Medical diagnosis"
+          },
+          "patient_history": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient History",
+            "description": "Patient medical history"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome",
+            "description": "Treatment outcome"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaseStatus",
+            "description": "Case status",
+            "default": "new_referral"
+          },
+          "subspecialty": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseSubspecialty"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Orthopedic subspecialty"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/PriorityLevel",
+            "description": "Case priority",
+            "default": "medium"
+          },
+          "surgery_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Surgery Date",
+            "description": "Scheduled surgery date"
+          },
+          "order_index": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Order Index",
+            "description": "Order index for sorting",
+            "default": 0
+          },
+          "referral_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referral Date",
+            "description": "Date of referral"
+          },
+          "consultant_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consultant Id",
+            "description": "Assigned consultant ID"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "Case unique identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Case creation timestamp"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "Case last update timestamp"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Created By",
+            "description": "User who created the case"
+          },
+          "last_modified_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Modified By",
+            "description": "User who last modified the case"
+          },
+          "consultant": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserSimple"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Assigned consultant information"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id",
+          "created_at",
+          "created_by"
+        ],
+        "title": "Case"
+      },
+      "CaseCreate": {
+        "properties": {
+          "hospital_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hospital Number",
+            "description": "Hospital patient number"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Patient name"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 150,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age",
+            "description": "Patient age"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GenderType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Patient gender"
+          },
+          "diagnosis": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnosis",
+            "description": "Medical diagnosis"
+          },
+          "patient_history": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient History",
+            "description": "Patient medical history"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome",
+            "description": "Treatment outcome"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaseStatus",
+            "description": "Case status",
+            "default": "new_referral"
+          },
+          "subspecialty": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseSubspecialty"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Orthopedic subspecialty"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/PriorityLevel",
+            "description": "Case priority",
+            "default": "medium"
+          },
+          "surgery_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Surgery Date",
+            "description": "Scheduled surgery date"
+          },
+          "order_index": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Order Index",
+            "description": "Order index for sorting",
+            "default": 0
+          },
+          "referral_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referral Date",
+            "description": "Date of referral"
+          },
+          "consultant_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consultant Id",
+            "description": "Assigned consultant ID"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "CaseCreate"
+      },
+      "CaseSchedule": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Case Id",
+            "description": "Case ID"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Session Id",
+            "description": "Session ID"
+          },
+          "scheduled_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Scheduled Date",
+            "description": "Scheduled date"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Start Time",
+            "description": "Start time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "End Time",
+            "description": "End time"
+          },
+          "estimated_duration": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Estimated Duration",
+            "description": "Estimated duration in minutes"
+          },
+          "order_index": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Order Index",
+            "description": "Order index",
+            "default": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/ScheduleStatus",
+            "description": "Schedule status",
+            "default": "scheduled"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Schedule notes"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "Schedule unique identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Schedule creation timestamp"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "Schedule last update timestamp"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Created By",
+            "description": "User who created the schedule"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "session_id",
+          "scheduled_date",
+          "start_time",
+          "end_time",
+          "estimated_duration",
+          "id",
+          "created_at",
+          "created_by"
+        ],
+        "title": "CaseSchedule"
+      },
+      "CaseScheduleCreate": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Case Id",
+            "description": "Case ID"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Session Id",
+            "description": "Session ID"
+          },
+          "scheduled_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Scheduled Date",
+            "description": "Scheduled date"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Start Time",
+            "description": "Start time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "End Time",
+            "description": "End time"
+          },
+          "estimated_duration": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Estimated Duration",
+            "description": "Estimated duration in minutes"
+          },
+          "order_index": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Order Index",
+            "description": "Order index",
+            "default": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/ScheduleStatus",
+            "description": "Schedule status",
+            "default": "scheduled"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Schedule notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "session_id",
+          "scheduled_date",
+          "start_time",
+          "end_time",
+          "estimated_duration"
+        ],
+        "title": "CaseScheduleCreate"
+      },
+      "CaseScheduleUpdate": {
+        "properties": {
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id",
+            "description": "Case ID"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id",
+            "description": "Session ID"
+          },
+          "scheduled_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled Date",
+            "description": "Scheduled date"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time",
+            "description": "Start time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time",
+            "description": "End time"
+          },
+          "estimated_duration": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Duration",
+            "description": "Estimated duration in minutes"
+          },
+          "order_index": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Index",
+            "description": "Order index"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Schedule status"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Schedule notes"
+          }
+        },
+        "type": "object",
+        "title": "CaseScheduleUpdate"
+      },
+      "CaseStatisticsResponse": {
+        "properties": {
+          "total_cases": {
+            "type": "integer",
+            "title": "Total Cases",
+            "description": "Total number of cases"
+          },
+          "new_referrals": {
+            "type": "integer",
+            "title": "New Referrals",
+            "description": "Number of new referrals"
+          },
+          "awaiting_surgery": {
+            "type": "integer",
+            "title": "Awaiting Surgery",
+            "description": "Number of cases awaiting surgery"
+          },
+          "scheduled_cases": {
+            "type": "integer",
+            "title": "Scheduled Cases",
+            "description": "Number of scheduled cases"
+          },
+          "completed_cases": {
+            "type": "integer",
+            "title": "Completed Cases",
+            "description": "Number of completed cases"
+          },
+          "archived_cases": {
+            "type": "integer",
+            "title": "Archived Cases",
+            "description": "Number of archived cases"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_cases",
+          "new_referrals",
+          "awaiting_surgery",
+          "scheduled_cases",
+          "completed_cases",
+          "archived_cases"
+        ],
+        "title": "CaseStatisticsResponse"
+      },
+      "CaseStatus": {
+        "type": "string",
+        "enum": [
+          "new_referral",
+          "awaiting_review",
+          "awaiting_surgery",
+          "scheduled",
+          "in_progress",
+          "completed",
+          "archived",
+          "onward_referral",
+          "cancelled"
+        ],
+        "title": "CaseStatus"
+      },
+      "CaseSubspecialty": {
+        "type": "string",
+        "enum": [
+          "hip_and_knee",
+          "foot_and_ankle",
+          "shoulder_and_elbow",
+          "hand",
+          "spine",
+          "trauma",
+          "sports"
+        ],
+        "title": "CaseSubspecialty"
+      },
+      "CaseUpdate": {
+        "properties": {
+          "hospital_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hospital Number",
+            "description": "Hospital patient number"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Patient name"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 150,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age",
+            "description": "Patient age"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GenderType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Patient gender"
+          },
+          "diagnosis": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnosis",
+            "description": "Medical diagnosis"
+          },
+          "patient_history": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient History",
+            "description": "Patient medical history"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome",
+            "description": "Treatment outcome"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Case status"
+          },
+          "subspecialty": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseSubspecialty"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Orthopedic subspecialty"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriorityLevel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Case priority"
+          },
+          "surgery_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Surgery Date",
+            "description": "Scheduled surgery date"
+          },
+          "order_index": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Index",
+            "description": "Order index for sorting"
+          },
+          "referral_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referral Date",
+            "description": "Date of referral"
+          },
+          "consultant_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consultant Id",
+            "description": "Assigned consultant ID"
+          }
+        },
+        "type": "object",
+        "title": "CaseUpdate"
+      },
+      "ConsultantWorkloadResponse": {
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "title": "First Name",
+            "description": "Consultant first name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name",
+            "description": "Consultant last name"
+          },
+          "case_count": {
+            "type": "integer",
+            "title": "Case Count",
+            "description": "Number of cases assigned"
+          }
+        },
+        "type": "object",
+        "required": [
+          "first_name",
+          "last_name",
+          "case_count"
+        ],
+        "title": "ConsultantWorkloadResponse"
+      },
+      "DepartmentSetting": {
+        "properties": {
+          "department": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Department",
+            "description": "Department name"
+          },
+          "setting_key": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Setting Key",
+            "description": "Setting key"
+          },
+          "setting_value": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Setting Value",
+            "description": "Setting value"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "Setting unique identifier"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "department",
+          "setting_key",
+          "setting_value",
+          "id",
+          "updated_at"
+        ],
+        "title": "DepartmentSetting"
+      },
+      "DepartmentSettingUpdate": {
+        "properties": {
+          "setting_value": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Setting Value",
+            "description": "Setting value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "setting_value"
+        ],
+        "title": "DepartmentSettingUpdate"
+      },
+      "GenderType": {
+        "type": "string",
+        "enum": [
+          "Male",
+          "Female",
+          "Other"
+        ],
+        "title": "GenderType"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Health status"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "API version"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp",
+            "description": "Current timestamp"
+          },
+          "services": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Services",
+            "description": "Service status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "version",
+          "timestamp",
+          "services"
+        ],
+        "title": "HealthResponse"
+      },
+      "LoginResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "JWT access token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "description": "Token type (bearer)"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Token expiration time in minutes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in"
+        ],
+        "title": "LoginResponse"
+      },
+      "NextOrderIndexResponse": {
+        "properties": {
+          "next_order_index": {
+            "type": "integer",
+            "title": "Next Order Index",
+            "description": "Next available order index"
+          }
+        },
+        "type": "object",
+        "required": [
+          "next_order_index"
+        ],
+        "title": "NextOrderIndexResponse"
+      },
+      "PaginatedResponse_Case_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Case"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "List of items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total number of items"
+          },
+          "skip": {
+            "type": "integer",
+            "title": "Skip",
+            "description": "Number of items skipped"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Maximum number of items returned"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "description": "Whether there are more items available"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "skip",
+          "limit",
+          "has_more"
+        ],
+        "title": "PaginatedResponse[Case]"
+      },
+      "PriorityLevel": {
+        "type": "string",
+        "enum": [
+          "urgent",
+          "high",
+          "medium",
+          "low"
+        ],
+        "title": "PriorityLevel"
+      },
+      "ReorderRequest": {
+        "properties": {
+          "target_date": {
+            "type": "string",
+            "title": "Target Date",
+            "description": "Target date in YYYY-MM-DD format"
+          },
+          "case_orders": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Case Orders",
+            "description": "List of case orders"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_date",
+          "case_orders"
+        ],
+        "title": "ReorderRequest"
+      },
+      "ReorderResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Success message"
+          },
+          "target_date": {
+            "type": "string",
+            "title": "Target Date",
+            "description": "Target date"
+          },
+          "updated_count": {
+            "type": "integer",
+            "title": "Updated Count",
+            "description": "Number of cases updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message",
+          "target_date",
+          "updated_count"
+        ],
+        "title": "ReorderResponse"
+      },
+      "RootResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Welcome message"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "API version"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "API description"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Features",
+            "description": "API features"
+          },
+          "documentation": {
+            "type": "string",
+            "title": "Documentation",
+            "description": "Documentation URL"
+          },
+          "health_check": {
+            "type": "string",
+            "title": "Health Check",
+            "description": "Health check endpoint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message",
+          "version",
+          "description",
+          "features",
+          "documentation",
+          "health_check"
+        ],
+        "title": "RootResponse"
+      },
+      "ScheduleStatus": {
+        "type": "string",
+        "enum": [
+          "scheduled",
+          "in_progress",
+          "completed",
+          "cancelled"
+        ],
+        "title": "ScheduleStatus"
+      },
+      "SearchRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "Search query"
+          },
+          "skip": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Skip",
+            "description": "Number of items to skip",
+            "default": 0
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 1000,
+            "minimum": 1,
+            "title": "Limit",
+            "description": "Maximum number of items to return",
+            "default": 100
+          },
+          "filters": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filters",
+            "description": "Additional filters"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "SearchRequest"
+      },
+      "SearchResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Case"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Search results"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total number of matching results"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "Search query used"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "query"
+        ],
+        "title": "SearchResponse"
+      },
+      "SessionStatus": {
+        "type": "string",
+        "enum": [
+          "scheduled",
+          "in_progress",
+          "completed",
+          "cancelled"
+        ],
+        "title": "SessionStatus"
+      },
+      "SessionType": {
+        "type": "string",
+        "enum": [
+          "morning",
+          "afternoon",
+          "evening",
+          "emergency",
+          "weekend"
+        ],
+        "title": "SessionType"
+      },
+      "SubspecialtyStatisticsResponse": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object",
+        "title": "SubspecialtyStatisticsResponse",
+        "description": "Subspecialty statistics response model"
+      },
+      "SuccessResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Success message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "SuccessResponse"
+      },
+      "SystemStatsResponse": {
+        "properties": {
+          "total_cases": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Total Cases",
+            "description": "Case statistics"
+          },
+          "subspecialty_stats": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Subspecialty Stats",
+            "description": "Subspecialty statistics"
+          },
+          "consultant_workload": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Consultant Workload",
+            "description": "Consultant workload"
+          },
+          "websocket_connections": {
+            "type": "integer",
+            "title": "Websocket Connections",
+            "description": "Number of WebSocket connections"
+          },
+          "active_users": {
+            "type": "integer",
+            "title": "Active Users",
+            "description": "Number of active users"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_cases",
+          "subspecialty_stats",
+          "consultant_workload",
+          "websocket_connections",
+          "active_users"
+        ],
+        "title": "SystemStatsResponse"
+      },
+      "Theatre": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Theatre name"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "Theatre location"
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Capacity",
+            "description": "Theatre capacity",
+            "default": 1
+          },
+          "equipment": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Equipment",
+            "description": "Available equipment"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "Whether theatre is active",
+            "default": true
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "Theatre unique identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Theatre creation timestamp"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "Theatre last update timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id",
+          "created_at"
+        ],
+        "title": "Theatre"
+      },
+      "TheatreCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Theatre name"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "Theatre location"
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Capacity",
+            "description": "Theatre capacity",
+            "default": 1
+          },
+          "equipment": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Equipment",
+            "description": "Available equipment"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "Whether theatre is active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "TheatreCreate"
+      },
+      "TheatreSession": {
+        "properties": {
+          "theatre_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Theatre Id",
+            "description": "Theatre ID"
+          },
+          "session_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Session Date",
+            "description": "Session date"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Start Time",
+            "description": "Session start time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "End Time",
+            "description": "Session end time"
+          },
+          "session_type": {
+            "$ref": "#/components/schemas/SessionType",
+            "description": "Session type",
+            "default": "morning"
+          },
+          "consultant_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consultant Id",
+            "description": "Assigned consultant ID"
+          },
+          "anaesthetist_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anaesthetist Id",
+            "description": "Assigned anaesthetist ID"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SessionStatus",
+            "description": "Session status",
+            "default": "scheduled"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Session notes"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "Session unique identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Session creation timestamp"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "Session last update timestamp"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Created By",
+            "description": "User who created the session"
+          },
+          "consultant": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserSimple"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Assigned consultant information"
+          },
+          "anaesthetist": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserSimple"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Assigned anaesthetist information"
+          }
+        },
+        "type": "object",
+        "required": [
+          "theatre_id",
+          "session_date",
+          "start_time",
+          "end_time",
+          "id",
+          "created_at",
+          "created_by"
+        ],
+        "title": "TheatreSession"
+      },
+      "TheatreSessionCreate": {
+        "properties": {
+          "theatre_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Theatre Id",
+            "description": "Theatre ID"
+          },
+          "session_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Session Date",
+            "description": "Session date"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Start Time",
+            "description": "Session start time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "End Time",
+            "description": "Session end time"
+          },
+          "session_type": {
+            "$ref": "#/components/schemas/SessionType",
+            "description": "Session type",
+            "default": "morning"
+          },
+          "consultant_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consultant Id",
+            "description": "Assigned consultant ID"
+          },
+          "anaesthetist_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anaesthetist Id",
+            "description": "Assigned anaesthetist ID"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SessionStatus",
+            "description": "Session status",
+            "default": "scheduled"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Session notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "theatre_id",
+          "session_date",
+          "start_time",
+          "end_time"
+        ],
+        "title": "TheatreSessionCreate"
+      },
+      "TheatreSessionUpdate": {
+        "properties": {
+          "theatre_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Theatre Id",
+            "description": "Theatre ID"
+          },
+          "session_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Date",
+            "description": "Session date"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time",
+            "description": "Session start time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time",
+            "description": "Session end time"
+          },
+          "session_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SessionType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Session type"
+          },
+          "consultant_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consultant Id",
+            "description": "Assigned consultant ID"
+          },
+          "anaesthetist_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anaesthetist Id",
+            "description": "Assigned anaesthetist ID"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SessionStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Session status"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Session notes"
+          }
+        },
+        "type": "object",
+        "title": "TheatreSessionUpdate"
+      },
+      "TheatreUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Theatre name"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "Theatre location"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity",
+            "description": "Theatre capacity"
+          },
+          "equipment": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equipment",
+            "description": "Available equipment"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active",
+            "description": "Whether theatre is active"
+          }
+        },
+        "type": "object",
+        "title": "TheatreUpdate"
+      },
+      "TheatreUtilizationResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Utilization message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "TheatreUtilizationResponse"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "JWT access token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "description": "Token type (bearer)"
+          },
+          "user": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "User",
+            "description": "User information"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "token_type",
+          "user"
+        ],
+        "title": "TokenResponse"
+      },
+      "TrendsResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Trends message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "TrendsResponse"
+      },
+      "User": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "User email address"
+          },
+          "first_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "First Name",
+            "description": "First name"
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Last Name",
+            "description": "Last name"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department",
+            "description": "Department"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole",
+            "description": "User role",
+            "default": "viewer"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "Whether user is active",
+            "default": true
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "User unique identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "User creation timestamp"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "User last update timestamp"
+          },
+          "last_login": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login",
+            "description": "Last login timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "first_name",
+          "last_name",
+          "id",
+          "created_at"
+        ],
+        "title": "User"
+      },
+      "UserCreate": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "User email address"
+          },
+          "first_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "First Name",
+            "description": "First name"
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Last Name",
+            "description": "Last name"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department",
+            "description": "Department"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole",
+            "description": "User role",
+            "default": "viewer"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "Whether user is active",
+            "default": true
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "title": "Password",
+            "description": "Password (minimum 8 characters)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "first_name",
+          "last_name",
+          "password"
+        ],
+        "title": "UserCreate"
+      },
+      "UserLogin": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "description": "User password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserLogin"
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "admin",
+          "consultant",
+          "nurse",
+          "viewer",
+          "anaesthetist"
+        ],
+        "title": "UserRole"
+      },
+      "UserSimple": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "User unique identifier"
+          },
+          "first_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "First Name",
+            "description": "First name"
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Last Name",
+            "description": "Last name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "User email address"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole",
+            "description": "User role"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department",
+            "description": "Department"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "email",
+          "role"
+        ],
+        "title": "UserSimple"
+      },
+      "UserUpdate": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "User email address"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name",
+            "description": "First name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name",
+            "description": "Last name"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department",
+            "description": "Department"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "User role"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active",
+            "description": "Whether user is active"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password",
+            "description": "New password"
+          }
+        },
+        "type": "object",
+        "title": "UserUpdate"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WebSocketStatusResponse": {
+        "properties": {
+          "active_connections": {
+            "type": "integer",
+            "title": "Active Connections",
+            "description": "Number of active WebSocket connections"
+          },
+          "active_users": {
+            "type": "integer",
+            "title": "Active Users",
+            "description": "Number of active users"
+          },
+          "theatre_subscriptions": {
+            "type": "integer",
+            "title": "Theatre Subscriptions",
+            "description": "Number of theatre subscriptions"
+          },
+          "calendar_subscriptions": {
+            "type": "integer",
+            "title": "Calendar Subscriptions",
+            "description": "Number of calendar subscriptions"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp",
+            "description": "Current timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_connections",
+          "active_users",
+          "theatre_subscriptions",
+          "calendar_subscriptions",
+          "timestamp"
+        ],
+        "title": "WebSocketStatusResponse"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {
 
-
-Response:
-
-{
-  "access_token": "<JWT_TOKEN>",
-  "token_type": "bearer"
-}
-
-
-Notes:
-
-Use access_token in Authorization header for all protected requests.
-
-Header format: Authorization: Bearer <JWT_TOKEN>
-
-Register
-
-Endpoint: POST /users/register
-
-Request Body:
-
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-
-
-Response:
-
-{
-  "id": "<user_id>",
-  "email": "user@example.com",
-  "created_at": "2025-08-23T08:00:00Z"
-}
-
-
-Notes: Creates a new user. Returns the created user info.
-
-Cases API
-
-All endpoints require Authorization: Bearer <JWT_TOKEN>.
-
-Get Cases
-
-Endpoint: GET /cases/
-
-Query Parameters (optional, dynamic based on Case model):
-
-name
-
-diagnosis
-
-outcome
-
-section
-
-surgery_date_from (YYYY-MM-DD)
-
-surgery_date_to (YYYY-MM-DD)
-
-archived (true/false)
-
-Response: Array of case objects:
-
-[
-  {
-    "id": "uuid",
-    "name": "John Doe",
-    "diagnosis": "Tibia fracture",
-    "outcome": "Pending",
-    "section": "new_referral",
-    "surgery_date": "2025-08-25",
-    "order_index": 1,
-    "archived": false,
-    "created_at": "2025-08-22T06:09:27Z",
-    "updated_at": "2025-08-22T06:09:27Z"
+            },
+            "tokenUrl": "/auth/login"
+          }
+        }
+      }
+    }
   }
-]
-
-Create Case
-
-Endpoint: POST /cases/
-
-Request Body:
-
-{
-  "name": "John Doe",
-  "diagnosis": "Tibia fracture",
-  "outcome": "Pending",
-  "section": "new_referral",
-  "surgery_date": "2025-08-25",
-  "order_index": 1
-}
-
-
-Response: Created case object (same structure as above).
-
-Side Effect: Broadcasts {"action": "create", "case": "<id>"} over WebSocket.
-
-Update Case
-
-Endpoint: PATCH /cases/{case_id}
-
-Request Body: Only include fields to update.
-
-{
-  "outcome": "Scheduled",
-  "section": "on_list"
-}
-
-
-Response: Updated case object.
-
-Side Effect: Broadcasts {"action": "update", "case": "<id>"} over WebSocket.
-
-Delete Case
-
-Endpoint: DELETE /cases/{case_id}
-
-Response:
-
-{"detail": "Deleted"}
-
-
-Side Effect: Broadcasts {"action": "delete", "case": "<id>"} over WebSocket.
-
-WebSocket
-
-URL: wss://<domain>/ws?token=<JWT_TOKEN>
-
-Authentication: token query param (JWT token).
-
-Broadcast Events:
-
-Create Case: {"action": "create", "case": "<id>"}
-
-Update Case: {"action": "update", "case": "<id>"}
-
-Delete Case: {"action": "delete", "case": "<id>"}
-
-Client Message: Optional. Frontend can also send text to WebSocket (currently broadcasted to all).
-
-Date Filtering Notes
-
-Any *_from or *_to parameter (like surgery_date_from) must be YYYY-MM-DD.
-
-Filters by default only return non-archived cases unless archived=true is specified.
