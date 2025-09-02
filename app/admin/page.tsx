@@ -3,15 +3,20 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
-import TraumaBoard from '@/components/TraumaBoard';
 import auth from '@/lib/auth';
 import { User } from '@/lib/types';
-import { DataProvider } from '@/lib/DataContext';
+import AdminDashboard from '@/components/AdminDashboard';
+import UsersManagement from '@/components/UsersManagement';
+import SessionConfiguration from '@/components/SessionConfiguration';
+import { Users, Settings, BarChart3, Home } from 'lucide-react';
+
+type AdminTab = 'dashboard' | 'users' | 'sessions' | 'analytics';
 
 export default function AdminPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
 
   useEffect(() => {
     // Check authentication status
@@ -46,6 +51,33 @@ export default function AdminPage() {
     return null; // Will redirect to login
   }
 
+  const tabs = [
+    { id: 'dashboard' as AdminTab, name: 'Dashboard', icon: Home },
+    { id: 'users' as AdminTab, name: 'Users', icon: Users },
+    { id: 'sessions' as AdminTab, name: 'Session Config', icon: Settings },
+    { id: 'analytics' as AdminTab, name: 'Analytics', icon: BarChart3 }
+  ];
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <AdminDashboard />;
+      case 'users':
+        return <UsersManagement />;
+      case 'sessions':
+        return <SessionConfiguration />;
+      case 'analytics':
+        return (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Analytics</h2>
+            <p className="text-gray-600">Analytics features coming soon...</p>
+          </div>
+        );
+      default:
+        return <AdminDashboard />;
+    }
+  };
+
   return (
     <>
       <Toaster position="top-right" />
@@ -78,39 +110,34 @@ export default function AdminPage() {
           </div>
         </header>
 
+        {/* Navigation Tabs */}
+        <div className="border-b border-gray-200 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav className="-mb-px flex space-x-8">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      activeTab === tab.id
+                        ? 'border-indigo-500 text-indigo-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{tab.name}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+
         {/* Admin Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-lg shadow p-6 mb-8">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Admin Features</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 border border-gray-200 rounded-lg">
-                <h3 className="font-medium text-gray-900">User Management</h3>
-                <p className="text-sm text-gray-600 mt-1">Manage users and roles</p>
-                <button className="mt-2 px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                  Coming Soon
-                </button>
-              </div>
-              <div className="p-4 border border-gray-200 rounded-lg">
-                <h3 className="font-medium text-gray-900">System Settings</h3>
-                <p className="text-sm text-gray-600 mt-1">Configure system parameters</p>
-                <button className="mt-2 px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                  Coming Soon
-                </button>
-              </div>
-              <div className="p-4 border border-gray-200 rounded-lg">
-                <h3 className="font-medium text-gray-900">Analytics</h3>
-                <p className="text-sm text-gray-600 mt-1">View detailed analytics</p>
-                <button className="mt-2 px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                  Coming Soon
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Trauma Board with Admin Features */}
-          <DataProvider>
-            <TraumaBoard user={user} isAdmin={true} />
-          </DataProvider>
+          {renderTabContent()}
         </main>
       </div>
     </>

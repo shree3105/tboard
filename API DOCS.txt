@@ -1276,7 +1276,7 @@
           "Sessions"
         ],
         "summary": "Get Sessions",
-        "description": "Get theatre sessions with optional filtering",
+        "description": "Get theatre sessions with optional filtering and auto-initialization",
         "operationId": "get_sessions_sessions__get",
         "security": [
           {
@@ -1331,6 +1331,18 @@
               ],
               "title": "Session Type"
             }
+          },
+          {
+            "name": "auto_initialize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Auto-initialize sessions from templates if none exist",
+              "default": true,
+              "title": "Auto Initialize"
+            },
+            "description": "Auto-initialize sessions from templates if none exist"
           }
         ],
         "responses": {
@@ -1902,29 +1914,112 @@
           "Admin"
         ],
         "summary": "Get Users",
-        "description": "Get all users (admin only)",
+        "description": "Get all users with filtering (admin only)",
         "operationId": "get_users_admin_users_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role"
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department"
+            }
+          },
+          {
+            "name": "is_active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Active"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/User"
                   },
-                  "type": "array",
                   "title": "Response Get Users Admin Users Get"
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ]
+        }
       },
       "post": {
         "tags": [
@@ -1933,15 +2028,20 @@
         "summary": "Create User",
         "description": "Create a new user (admin only)",
         "operationId": "create_user_admin_users_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UserCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -1964,12 +2064,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ]
+        }
       }
     },
     "/admin/users/{user_id}": {
@@ -2034,7 +2129,7 @@
           "Admin"
         ],
         "summary": "Delete User",
-        "description": "Delete a user (admin only)",
+        "description": "Permanently delete a user (admin only) - Use deactivate instead when possible",
         "operationId": "delete_user_admin_users__user_id__delete",
         "security": [
           {
@@ -2074,6 +2169,187 @@
             }
           }
         }
+      }
+    },
+    "/admin/users/{user_id}/deactivate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Deactivate User",
+        "description": "Deactivate a user (admin only)",
+        "operationId": "deactivate_user_admin_users__user_id__deactivate_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}/activate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Activate User",
+        "description": "Activate a user (admin only)",
+        "operationId": "activate_user_admin_users__user_id__activate_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}/reset-password": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Reset User Password",
+        "description": "Reset user password (admin only)",
+        "operationId": "reset_user_password_admin_users__user_id__reset_password_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "new_password",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "title": "New Password"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/statistics": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get User Statistics",
+        "description": "Get user statistics (admin only)",
+        "operationId": "get_user_statistics_admin_users_statistics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStatisticsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/admin/department-settings": {
@@ -2173,6 +2449,142 @@
             "OAuth2PasswordBearer": []
           }
         ]
+      }
+    },
+    "/admin/session-config": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get Session Config",
+        "description": "Get the single default session configuration (admin only)",
+        "operationId": "get_session_config_admin_session_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSessionConfig"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update Session Config",
+        "description": "Update the single default session configuration (admin only)",
+        "operationId": "update_session_config_admin_session_config_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefaultSessionConfigUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSessionConfig"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/initialize-sessions/{date}": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Initialize Sessions For Date",
+        "description": "Initialize sessions for a specific date using the default configuration (admin only)",
+        "operationId": "initialize_sessions_for_date_admin_initialize_sessions__date__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Date"
+            }
+          },
+          {
+            "name": "theatre_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Theatre Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/analytics/case-statistics": {
@@ -3781,6 +4193,314 @@
         ],
         "title": "ConsultantWorkloadResponse"
       },
+      "DefaultSessionConfig": {
+        "properties": {
+          "morning_enabled": {
+            "type": "boolean",
+            "title": "Morning Enabled",
+            "description": "Enable morning sessions",
+            "default": true
+          },
+          "morning_start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Morning Start Time",
+            "description": "Morning session start time",
+            "default": "08:00:00"
+          },
+          "morning_end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Morning End Time",
+            "description": "Morning session end time",
+            "default": "12:00:00"
+          },
+          "afternoon_enabled": {
+            "type": "boolean",
+            "title": "Afternoon Enabled",
+            "description": "Enable afternoon sessions",
+            "default": true
+          },
+          "afternoon_start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Afternoon Start Time",
+            "description": "Afternoon session start time",
+            "default": "13:00:00"
+          },
+          "afternoon_end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Afternoon End Time",
+            "description": "Afternoon session end time",
+            "default": "17:00:00"
+          },
+          "evening_enabled": {
+            "type": "boolean",
+            "title": "Evening Enabled",
+            "description": "Enable evening sessions",
+            "default": false
+          },
+          "evening_start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Evening Start Time",
+            "description": "Evening session start time",
+            "default": "18:00:00"
+          },
+          "evening_end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Evening End Time",
+            "description": "Evening session end time",
+            "default": "22:00:00"
+          },
+          "weekend_enabled": {
+            "type": "boolean",
+            "title": "Weekend Enabled",
+            "description": "Enable sessions on weekends",
+            "default": false
+          },
+          "default_consultant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Consultant Id",
+            "description": "Default consultant ID"
+          },
+          "default_anaesthetist_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Anaesthetist Id",
+            "description": "Default anaesthetist ID"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Configuration ID"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By",
+            "description": "Creator user ID"
+          },
+          "default_consultant": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserSimple"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Default consultant"
+          },
+          "default_anaesthetist": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserSimple"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Default anaesthetist"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DefaultSessionConfig"
+      },
+      "DefaultSessionConfigUpdate": {
+        "properties": {
+          "morning_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Morning Enabled",
+            "description": "Enable morning sessions"
+          },
+          "morning_start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Morning Start Time",
+            "description": "Morning session start time"
+          },
+          "morning_end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Morning End Time",
+            "description": "Morning session end time"
+          },
+          "afternoon_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Afternoon Enabled",
+            "description": "Enable afternoon sessions"
+          },
+          "afternoon_start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Afternoon Start Time",
+            "description": "Afternoon session start time"
+          },
+          "afternoon_end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Afternoon End Time",
+            "description": "Afternoon session end time"
+          },
+          "evening_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evening Enabled",
+            "description": "Enable evening sessions"
+          },
+          "evening_start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evening Start Time",
+            "description": "Evening session start time"
+          },
+          "evening_end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evening End Time",
+            "description": "Evening session end time"
+          },
+          "weekend_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weekend Enabled",
+            "description": "Enable sessions on weekends"
+          },
+          "default_consultant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Consultant Id",
+            "description": "Default consultant ID"
+          },
+          "default_anaesthetist_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Anaesthetist Id",
+            "description": "Default anaesthetist ID"
+          }
+        },
+        "type": "object",
+        "title": "DefaultSessionConfigUpdate"
+      },
       "DepartmentSetting": {
         "properties": {
           "department": {
@@ -5097,6 +5817,62 @@
           "role"
         ],
         "title": "UserSimple"
+      },
+      "UserStatisticsResponse": {
+        "properties": {
+          "total_users": {
+            "type": "integer",
+            "title": "Total Users",
+            "description": "Total number of users"
+          },
+          "active_users": {
+            "type": "integer",
+            "title": "Active Users",
+            "description": "Number of active users"
+          },
+          "inactive_users": {
+            "type": "integer",
+            "title": "Inactive Users",
+            "description": "Number of inactive users"
+          },
+          "admins": {
+            "type": "integer",
+            "title": "Admins",
+            "description": "Number of admin users"
+          },
+          "consultants": {
+            "type": "integer",
+            "title": "Consultants",
+            "description": "Number of consultant users"
+          },
+          "nurses": {
+            "type": "integer",
+            "title": "Nurses",
+            "description": "Number of nurse users"
+          },
+          "viewers": {
+            "type": "integer",
+            "title": "Viewers",
+            "description": "Number of viewer users"
+          },
+          "anaesthetists": {
+            "type": "integer",
+            "title": "Anaesthetists",
+            "description": "Number of anaesthetist users"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_users",
+          "active_users",
+          "inactive_users",
+          "admins",
+          "consultants",
+          "nurses",
+          "viewers",
+          "anaesthetists"
+        ],
+        "title": "UserStatisticsResponse"
       },
       "UserUpdate": {
         "properties": {

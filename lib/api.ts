@@ -529,6 +529,173 @@ const apiClient = {
       return roleHierarchy[user.role] >= roleHierarchy[requiredRole];
     }
     return false;
+  },
+
+  // Admin endpoints
+  admin: {
+    // User Management
+    getUsers: async (params?: {
+      skip?: number;
+      limit?: number;
+      role?: string;
+      department?: string;
+      is_active?: boolean;
+    }): Promise<User[]> => {
+      const searchParams = new URLSearchParams();
+      if (params?.skip !== undefined) searchParams.append('skip', params.skip.toString());
+      if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString());
+      if (params?.role) searchParams.append('role', params.role);
+      if (params?.department) searchParams.append('department', params.department);
+      if (params?.is_active !== undefined) searchParams.append('is_active', params.is_active.toString());
+      
+      const response = await api.get(`/admin/users?${searchParams.toString()}`);
+      return response.data;
+    },
+
+    createUser: async (userData: {
+      email: string;
+      first_name: string;
+      last_name: string;
+      department?: string;
+      role: string;
+      password: string;
+      is_active?: boolean;
+    }): Promise<User> => {
+      const response = await api.post('/admin/users', userData);
+      return response.data;
+    },
+
+    updateUser: async (userId: string, updates: {
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+      role?: string;
+      department?: string;
+      is_active?: boolean;
+    }): Promise<User> => {
+      const response = await api.patch(`/admin/users/${userId}`, updates);
+      return response.data;
+    },
+
+    deactivateUser: async (userId: string): Promise<{ message: string }> => {
+      const response = await api.post(`/admin/users/${userId}/deactivate`);
+      return response.data;
+    },
+
+    activateUser: async (userId: string): Promise<{ message: string }> => {
+      const response = await api.post(`/admin/users/${userId}/activate`);
+      return response.data;
+    },
+
+    resetUserPassword: async (userId: string, newPassword: string): Promise<{ message: string }> => {
+      const response = await api.post(`/admin/users/${userId}/reset-password`, {
+        new_password: newPassword
+      });
+      return response.data;
+    },
+
+    deleteUser: async (userId: string): Promise<{ message: string }> => {
+      const response = await api.delete(`/admin/users/${userId}`);
+      return response.data;
+    },
+
+    getUserStatistics: async (): Promise<{
+      total_users: number;
+      active_users: number;
+      inactive_users: number;
+      admins: number;
+      consultants: number;
+      nurses: number;
+      viewers: number;
+      anaesthetists: number;
+    }> => {
+      const response = await api.get('/admin/users/statistics');
+      return response.data;
+    },
+
+    // Session Templates
+    getSessionTemplates: async (isWeekend?: boolean): Promise<Array<{
+      id: string;
+      theatre_id: string;
+      theatre?: { id: string; name: string };
+      start_time: string;
+      end_time: string;
+      session_type: string;
+      consultant_id?: string;
+      consultant?: { id: string; first_name: string; last_name: string };
+      anaesthetist_id?: string;
+      anaesthetist?: { id: string; first_name: string; last_name: string };
+      notes?: string;
+      is_weekend_template: boolean;
+    }>> => {
+      const params = isWeekend !== undefined ? `?is_weekend=${isWeekend}` : '';
+      const response = await api.get(`/admin/session-templates${params}`);
+      return response.data;
+    },
+
+    createSessionTemplate: async (template: {
+      theatre_id: string;
+      start_time: string;
+      end_time: string;
+      session_type: string;
+      consultant_id?: string;
+      anaesthetist_id?: string;
+      notes?: string;
+      is_weekend_template?: boolean;
+    }): Promise<{ message: string }> => {
+      const response = await api.post('/admin/session-templates', template);
+      return response.data;
+    },
+
+    updateSessionTemplate: async (templateId: string, updates: {
+      theatre_id?: string;
+      start_time?: string;
+      end_time?: string;
+      session_type?: string;
+      consultant_id?: string;
+      anaesthetist_id?: string;
+      notes?: string;
+      is_weekend_template?: boolean;
+    }): Promise<{ message: string }> => {
+      const response = await api.patch(`/admin/session-templates/${templateId}`, updates);
+      return response.data;
+    },
+
+    deleteSessionTemplate: async (templateId: string): Promise<{ message: string }> => {
+      const response = await api.delete(`/admin/session-templates/${templateId}`);
+      return response.data;
+    },
+
+    initializeSessions: async (date: string, theatreId?: string): Promise<{ message: string }> => {
+      const url = `/admin/initialize-sessions/${date}${theatreId ? `?theatre_id=${theatreId}` : ''}`;
+      const response = await api.post(url);
+      return response.data;
+    },
+
+    // System Statistics
+    getSystemStats: async (): Promise<{
+      total_cases: {
+        total_cases: number;
+        new_referrals: number;
+        awaiting_surgery: number;
+        scheduled_cases: number;
+        completed_cases: number;
+        archived_cases: number;
+      };
+      subspecialty_stats: Record<string, number>;
+      consultant_workload: Array<{
+        consultant_name: string;
+        first_name: string;
+        last_name: string;
+        total_cases: number;
+        case_count: number;
+      }>;
+      websocket_connections: number;
+      active_users: number;
+    }> => {
+      const response = await api.get('/admin/system-stats');
+      return response.data;
+    }
   }
 };
 
