@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Case, CaseStatus, CaseSubspecialty, GenderType, UserSimple } from '@/lib/types';
+import { Case, CaseStatus, CaseSubspecialty, GenderType, UserSimple, PriorityLevel } from '@/lib/types';
 import { Edit, Trash2, Save, X, GripVertical, CheckCircle, Archive } from 'lucide-react';
 import { getCaseStatusColor, getSubspecialtyColor, getMainSectionColor } from '@/lib/colors';
 import apiClient from '@/lib/api';
@@ -44,18 +44,16 @@ export default function CasesTable({
     patient_history?: string | null;
   }>({});
   const [newCaseData, setNewCaseData] = useState<Partial<Case>>({
+    hospital_number: '',
     name: '',
+    age: 0,
+    gender: 'Male',
     diagnosis: '',
-    outcome: 'Pending',
+    patient_history: '',
+    outcome: '',
     status: 'new_referral',
-    subspecialty: null,
-    priority: 'medium',
-    hospital_number: null,
     referral_date: null,
-    age: null,
-    gender: null,
-    consultant_id: null,
-    patient_history: null
+    consultant_id: null
   });
   const [isAddingNew, setIsAddingNew] = useState(false);
 
@@ -92,6 +90,22 @@ export default function CasesTable({
     return 'Unassigned';
   };
 
+  // Helper function to get priority color
+  const getPriorityColor = (priority: string): string => {
+    switch (priority) {
+      case 'low':
+        return 'bg-gray-100 text-gray-800 border-gray-300';
+      case 'medium':
+        return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'high':
+        return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'urgent':
+        return 'bg-red-100 text-red-800 border-red-300';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
+
   // Drag feedback state
   const [dragOverSection, setDragOverSection] = useState<string | null>(null);
   const [dragOverSubspecialty, setDragOverSubspecialty] = useState<string | null>(null);
@@ -112,6 +126,14 @@ export default function CasesTable({
     // Include all other statuses
     return true;
   });
+
+  // Debug: Check for duplicate case IDs in filtered cases
+  const caseIds = tableCases.map(c => c.id);
+  const duplicateIds = caseIds.filter((id, index) => caseIds.indexOf(id) !== index);
+  if (duplicateIds.length > 0) {
+    console.warn('🚨 Duplicate case IDs found in tableCases:', duplicateIds);
+    console.warn('🚨 Cases with duplicates:', tableCases.filter(c => duplicateIds.includes(c.id)));
+  }
 
   // Group cases by main sections
   const groupedCases = tableCases.reduce((acc, caseItem) => {
@@ -158,6 +180,9 @@ export default function CasesTable({
     });
   });
 
+  // Debug: Log grouped cases structure
+  console.log('🔍 Grouped cases structure:', groupedCases);
+
   // Define main section order and display names
   const mainSectionOrder = ['new_referral', 'awaiting_surgery', 'onward_referral', 'completed'];
   const mainSectionNames = {
@@ -171,8 +196,9 @@ export default function CasesTable({
   const allSubspecialties = ['hip_and_knee', 'foot_and_ankle', 'shoulder_and_elbow', 'hand', 'spine'];
 
   // Helper function to check if a case can be dragged to calendar
+  // Completed cases should not be draggable
   const canDragToCalendar = (caseItem: Case) => {
-    return caseItem.status !== 'completed' && caseItem.status !== 'archived';
+    return caseItem.status !== 'completed';
   };
 
   // Handle drag start
@@ -393,21 +419,41 @@ export default function CasesTable({
 
   const handleSaveNewCase = async () => {
     try {
-      await onCreateCase(newCaseData);
+      // Check if hospital number already exists (if provided)
+      if (newCaseData.hospital_number && newCaseData.hospital_number.trim()) {
+        const existingCase = cases.find(c => c.hospital_number === newCaseData.hospital_number);
+        if (existingCase) {
+          alert(`Hospital number "${newCaseData.hospital_number}" already exists. Please use a different number or leave it blank.`);
+          return;
+        }
+      }
+
+      // Validate required fields
+      if (!newCaseData.name || !newCaseData.hospital_number || !newCaseData.age || !newCaseData.gender || !newCaseData.diagnosis || !newCaseData.patient_history) {
+        alert('Please fill in all required fields marked with *');
+        return;
+      }
+
+      // Prepare case data with required fields
+      const caseDataToSend = {
+        ...newCaseData,
+        age: parseInt(newCaseData.age.toString()) || 0,
+        created_by: '8243754a-f9f1-4b1d-be30-662ceeb33675' // TODO: Get from auth context
+      };
+
+      await onCreateCase(caseDataToSend);
       setIsAddingNew(false);
       setNewCaseData({
+        hospital_number: '',
         name: '',
+        age: 0,
+        gender: 'Male',
         diagnosis: '',
-        outcome: 'Pending',
+        patient_history: '',
+        outcome: '',
         status: 'new_referral',
-        subspecialty: null,
-        priority: 'medium',
-        hospital_number: null,
         referral_date: null,
-        age: null,
-        gender: null,
-        consultant_id: null,
-        patient_history: null
+        consultant_id: null
       });
     } catch (error) {
       console.error('Error creating new case:', error);
@@ -499,9 +545,9 @@ export default function CasesTable({
           <input
             type="text"
             value={newCaseData.hospital_number || ''}
-            onChange={(e) => setNewCaseData(prev => ({ ...prev, hospital_number: e.target.value }))}
+            onChange={(e) => setNewCaseData(prev => ({ ...prev, hospital_number: e.target.value || null }))}
             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Hospital number"
+            placeholder="Hospital number (optional)"
           />
         </td>
         <td className="table-cell">
@@ -568,7 +614,7 @@ export default function CasesTable({
         <td className="table-cell">
           <input
             type="text"
-            value={newCaseData.outcome || 'Pending'}
+            value={newCaseData.outcome || ''}
             onChange={(e) => setNewCaseData(prev => ({ ...prev, outcome: e.target.value }))}
             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="Outcome"
@@ -658,7 +704,7 @@ export default function CasesTable({
             <div className="mb-2">
               <div 
                 onDragOver={mainSection !== 'completed' ? handleDragOver : undefined}
-                onDrop={mainSection !== 'completed' && mainSection !== 'awaiting_surgery' ? (e) => {
+                onDrop={mainSection !== 'completed' ? (e) => {
                   // Determine the correct status and subspecialty based on the section
                   let status = mainSection;
                   let subspecialty = undefined;
@@ -667,18 +713,11 @@ export default function CasesTable({
                     status = 'new_referral';
                   } else if (mainSection === 'onward_referral') {
                     status = 'onward_referral';
-                  } else if (mainSection === 'completed') {
-                    status = 'completed';
+                  } else if (mainSection === 'awaiting_surgery') {
+                    status = 'awaiting_surgery';
                   }
                   
                   handleDropOnSection(e, status, subspecialty);
-                } : mainSection === 'awaiting_surgery' ? (e) => {
-                  // For awaiting_surgery section, accept drops from calendar (reset to awaiting_surgery)
-                  e.preventDefault();
-                  const caseId = e.dataTransfer.getData('text/plain');
-                  if (caseId) {
-                    handleDropOnSection(e, 'awaiting_surgery');
-                  }
                 } : undefined}
               >
                 <table className="min-w-full divide-y divide-gray-200">

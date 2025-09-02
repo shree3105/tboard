@@ -438,6 +438,7 @@ export interface WebSocketMessage {
   data: any;
   timestamp: string;
   user_id?: string;
+  subscriptions?: string[]; // For connection_established messages
 }
 
 // Legacy types for backward compatibility

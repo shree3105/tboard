@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -12,286 +12,234 @@ import CasesTable from './CasesTable';
 import DashboardStats from './DashboardStats';
 import NotificationPanel from './NotificationPanel';
 import SingleDayCalendar from './SingleDayCalendar';
+import { useData } from '@/lib/DataContext';
 
 interface TraumaBoardProps {
   user?: User;
   isAdmin?: boolean;
 }
 
+// Component instance counter to debug duplicate rendering
+let traumaBoardInstanceCount = 0;
+
 export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps) {
   const router = useRouter();
   
-  // State management
-  const [cases, setCases] = useState<Case[]>([]);
-  const [theatres, setTheatres] = useState<any[]>([]);
-  const [sessions, setSessions] = useState<TheatreSession[]>([]);
+  // Track component instances
+  const instanceId = React.useId();
+  React.useEffect(() => {
+    traumaBoardInstanceCount++;
+    console.log(`🏥 TraumaBoard instance ${instanceId} created (total: ${traumaBoardInstanceCount})`);
+    
+    return () => {
+      traumaBoardInstanceCount--;
+      console.log(`🏥 TraumaBoard instance ${instanceId} destroyed (total: ${traumaBoardInstanceCount})`);
+    };
+  }, [instanceId]);
+  
+  // Use centralized data context
+  const {
+    cases,
+    theatres,
+    sessions,
+    isLoading: isDataLoading,
+    isInitialized,
+    addCase,
+    updateCase: updateCaseInContext,
+    deleteCase: deleteCaseInContext,
+    addSession,
+    updateSession,
+    deleteSession,
+    addTheatre,
+    updateTheatre,
+    deleteTheatre
+  } = useData();
+  
+  // Debug: Log cases array changes
+  useEffect(() => {
+    console.log(`🏥 TraumaBoard cases updated: ${cases.length} cases`);
+    console.log(`🏥 Cases in TraumaBoard:`, cases.map(c => `${c.id} - ${c.name} (${c.status})`));
+    const caseIds = cases.map(c => c.id);
+    const duplicateIds = caseIds.filter((id, index) => caseIds.indexOf(id) !== index);
+    if (duplicateIds.length > 0) {
+      console.warn('🚨 Duplicate case IDs found in TraumaBoard:', duplicateIds);
+    }
+  }, [cases]);
+  
+  // Local state for schedules (date-specific)
   const [schedules, setSchedules] = useState<CaseSchedule[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // WebSocket connection
   const [wsClient, setWsClient] = useState<any>(null);
+  
+  // Track last processed date to prevent duplicate API calls during Strict Mode
+  const lastProcessedDate = React.useRef<string | null>(null);
+  
+  // Force re-render when WebSocket updates come in
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Initialize WebSocket connection
+
+
+  // No need to fetch initial data - DataContext handles it
+  // Just initialize schedules as empty
   useEffect(() => {
-    if (auth.isAuthenticated()) {
-      const wsClient = require('@/lib/websocket').default;
-      
-          wsClient.onCaseUpdate(handleWebSocketCaseUpdate);
-    wsClient.onSessionUpdate(handleWebSocketSessionUpdate);
-    wsClient.onScheduleUpdate(handleWebSocketScheduleUpdate);
-    wsClient.onBulkScheduleUpdate(handleWebSocketBulkScheduleUpdate);
-    wsClient.onTheatreUpdate(handleWebSocketTheatreUpdate);
-      
-      setWsClient(wsClient);
-
-      return () => {
-        wsClient.disconnect();
-      };
-    }
+    setSchedules([]);
   }, []);
+  
 
-  // Fetch initial data
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
 
-  const fetchInitialData = async () => {
-    setIsLoading(true);
-    try {
-      // Fetch all non-archived cases for the main table
-      const [casesResponse, theatresResponse, sessionsResponse] = await Promise.all([
-        apiClient.getCases({ archived: false }),
-        apiClient.getTheatres(),
-        apiClient.getSessions()
-      ]);
-
-      setCases(casesResponse.items);
-      setTheatres(theatresResponse);
-      setSessions(sessionsResponse);
-      setSchedules([]); // Initialize empty, will load per date
-    } catch (error) {
-      console.error('Error fetching initial data:', error);
-      toast.error('Failed to load cases');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // WebSocket handlers
+  // WebSocket handlers - Real-time updates without manual refreshes
   const handleWebSocketCaseUpdate = useCallback((message: any) => {
-    const { action, case_id, data, old_status, new_status } = message;
+    const { action, case_id, data } = message;
     
     switch (action) {
       case 'create':
+      case 'created':
         // Add new case to list
         if (data && !data.archived) {
-          setCases(prevCases => {
-            const exists = prevCases.find(c => c.id === case_id);
-            if (!exists) {
-              return [...prevCases, data];
-            }
-            return prevCases;
-          });
+          addCase(data);
+          setRefreshTrigger(prev => prev + 1);
         }
         break;
         
       case 'update':
+      case 'updated':
         // Update existing case
         if (data) {
-          setCases(prevCases => {
-            const index = prevCases.findIndex(c => c.id === case_id);
-            if (index !== -1) {
-              const newCases = [...prevCases];
-              newCases[index] = data;
-              return newCases;
-            }
-            return prevCases;
-          });
+          // Check if case exists in current array
+          const existingCase = cases.find(c => c.id === case_id);
+          
+          if (existingCase) {
+            updateCaseInContext(case_id, data);
+          } else {
+            addCase(data);
+          }
+          
+          // Force re-render to show the update
+          setRefreshTrigger(prev => prev + 1);
         }
         break;
         
       case 'status_changed':
         // Handle status transition
         if (data) {
-          setCases(prevCases => {
-            const index = prevCases.findIndex(c => c.id === case_id);
-            if (index !== -1) {
-              const newCases = [...prevCases];
-              newCases[index] = data;
-              return newCases;
-            }
-            return prevCases;
-          });
+          updateCaseInContext(case_id, data);
         }
         break;
         
       case 'scheduled':
         // Case was scheduled to a session - update status
         if (data) {
-          setCases(prevCases => {
-            const index = prevCases.findIndex(c => c.id === case_id);
-            if (index !== -1) {
-              const newCases = [...prevCases];
-              newCases[index] = data;
-              return newCases;
-            }
-            return prevCases;
-          });
+          updateCaseInContext(case_id, data);
         }
         break;
         
       case 'unscheduled':
         // Case was removed from session - update status
         if (data) {
-          setCases(prevCases => {
-            const index = prevCases.findIndex(c => c.id === case_id);
-            if (index !== -1) {
-              const newCases = [...prevCases];
-              newCases[index] = data;
-              return newCases;
-            }
-            return prevCases;
-          });
+          updateCaseInContext(case_id, data);
         }
         break;
         
-      case 'archive':
-        // Case was archived - remove from main list
-        setCases(prevCases => prevCases.filter(c => c.id !== case_id));
+      case 'archived':
+        // Case was archived - update to archived status but keep in context for calendar display
+        if (data) {
+          updateCaseInContext(case_id, { ...data, status: 'archived' });
+        } else {
+          // If no data provided, just update the status to archived
+          updateCaseInContext(case_id, { status: 'archived' });
+        }
         break;
         
-      case 'unarchive':
-        // Case was unarchived - add back to list if not already there
-        if (data && !data.archived) {
-          setCases(prevCases => {
-            const exists = prevCases.find(c => c.id === case_id);
-            if (!exists) {
-              return [...prevCases, data];
-            }
-            return prevCases;
-          });
+      case 'unarchived':
+        // Case was unarchived - update status and add back to list if not already there
+        if (data) {
+          const existingCase = cases.find(c => c.id === case_id);
+          if (existingCase) {
+            updateCaseInContext(case_id, { ...data, status: data.status || 'awaiting_surgery' });
+          } else {
+            addCase({ ...data, status: data.status || 'awaiting_surgery' });
+          }
         }
         break;
         
       case 'delete':
+      case 'deleted':
         // Case was deleted - remove from list
-        setCases(prevCases => prevCases.filter(c => c.id !== case_id));
+        deleteCaseInContext(case_id);
+        setRefreshTrigger(prev => prev + 1);
         break;
         
       case 'bulk_update':
-        // Refresh multiple cases - trigger a full reload
-        if (message.case_ids) {
-          // For bulk updates, we'll reload all cases
-          fetchInitialData();
+        // Handle bulk case updates in real-time
+        if (message.case_ids && message.data) {
+          // Update multiple cases at once
+          message.case_ids.forEach((id: string) => {
+            updateCaseInContext(id, message.data);
+          });
         }
         break;
         
       default:
         // Fallback for unknown actions
         if (data) {
-          setCases(prevCases => {
-            const index = prevCases.findIndex(c => c.id === case_id);
-            if (index !== -1) {
-              const newCases = [...prevCases];
-              newCases[index] = data;
-              return newCases;
-            } else if (!data.archived) {
-              return [...prevCases, data];
-            }
-            return prevCases;
-          });
+          if (data.archived) {
+            deleteCaseInContext(case_id);
+          } else {
+            addCase(data);
+          }
         }
         break;
     }
-  }, []);
+  }, [cases, addCase, updateCaseInContext, deleteCaseInContext]);
 
   const handleWebSocketSessionUpdate = useCallback((message: any) => {
     const { action, session_id, data, case_id, schedule_id } = message;
     
     switch (action) {
-      case 'create':
+      case 'created':
         // New session created
         if (data) {
-          setSessions(prevSessions => {
-            const exists = prevSessions.find(s => s.id === session_id);
-            if (!exists) {
-              return [...prevSessions, data];
-            }
-            return prevSessions;
-          });
+          addSession(data);
         }
         break;
         
-      case 'update':
+      case 'updated':
         // Session updated
         if (data) {
-          setSessions(prevSessions => {
-            const index = prevSessions.findIndex(s => s.id === session_id);
-            if (index !== -1) {
-              const newSessions = [...prevSessions];
-              newSessions[index] = data;
-              return newSessions;
-            }
-            return prevSessions;
-          });
+          updateSession(session_id, data);
         }
         break;
         
-      case 'delete':
+      case 'deleted':
         // Session deleted
-        setSessions(prevSessions => 
-          prevSessions.filter(s => s.id !== session_id)
-        );
+        deleteSession(session_id);
         break;
         
       case 'case_added':
-        // Case added to session - refresh schedules for that session
-        if (session_id) {
-          // Find the session to get its date
-          const session = sessions.find(s => s.id === session_id);
-          if (session) {
-            loadSchedulesForDate(session.session_date);
-          }
-        }
+        // Case added to session - WebSocket will handle schedule updates
+        console.log('Case added to session:', case_id, session_id);
         break;
         
       case 'case_removed':
-        // Case removed from session - refresh schedules for that session
-        if (session_id) {
-          const session = sessions.find(s => s.id === session_id);
-          if (session) {
-            loadSchedulesForDate(session.session_date);
-          }
-        }
+        // Case removed from session - WebSocket will handle schedule updates
+        console.log('Case removed from session:', case_id, session_id);
         break;
         
       case 'case_reordered':
-        // Cases reordered in session - refresh schedules for that session
-        if (session_id) {
-          const session = sessions.find(s => s.id === session_id);
-          if (session) {
-            loadSchedulesForDate(session.session_date);
-          }
-        }
+        // Cases reordered in session - WebSocket will handle schedule updates
+        console.log('Cases reordered in session:', session_id);
         break;
         
       default:
         // Fallback for unknown actions
         if (data) {
-          setSessions(prevSessions => {
-            const index = prevSessions.findIndex(s => s.id === session_id);
-            if (index !== -1) {
-              const newSessions = [...prevSessions];
-              newSessions[index] = data;
-              return newSessions;
-            } else {
-              return [...prevSessions, data];
-            }
-          });
+          console.log('Unknown session action:', action, session_id);
         }
         break;
     }
-  }, [sessions]);
+  }, [addSession, updateSession, deleteSession]);
 
   const handleWebSocketScheduleUpdate = useCallback((message: any) => {
     const { action, schedule_id, case_id, session_id, data } = message;
@@ -348,7 +296,7 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
         }
         break;
     }
-  }, []);
+  }, [setSchedules]);
 
   const handleWebSocketBulkScheduleUpdate = useCallback((message: any) => {
     const { action, schedules } = message;
@@ -364,90 +312,159 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
         return prevSchedules;
       });
     }
-  }, []);
+  }, [setSchedules]);
 
   const handleWebSocketTheatreUpdate = useCallback((message: any) => {
     const { action, theatre_id, data } = message;
     
     switch (action) {
-      case 'create':
+      case 'created':
         // New theatre created
         if (data) {
-          setTheatres(prevTheatres => {
-            const exists = prevTheatres.find(t => t.id === theatre_id);
-            if (!exists) {
-              return [...prevTheatres, data];
-            }
-            return prevTheatres;
-          });
+          addTheatre(data);
         }
         break;
         
-      case 'update':
+      case 'updated':
         // Theatre updated
         if (data) {
-          setTheatres(prevTheatres => {
-            const index = prevTheatres.findIndex(t => t.id === theatre_id);
-            if (index !== -1) {
-              const newTheatres = [...prevTheatres];
-              newTheatres[index] = data;
-              return newTheatres;
-            }
-            return prevTheatres;
-          });
+          updateTheatre(theatre_id, data);
         }
         break;
         
-      case 'delete':
+      case 'deleted':
         // Theatre deleted
-        setTheatres(prevTheatres => 
-          prevTheatres.filter(t => t.id !== theatre_id)
-        );
+        deleteTheatre(theatre_id);
         break;
         
       default:
         // Fallback for unknown actions
         if (data) {
-          setTheatres(prevTheatres => {
-            const index = prevTheatres.findIndex(t => t.id === theatre_id);
-            if (index !== -1) {
-              const newTheatres = [...prevTheatres];
-              newTheatres[index] = data;
-              return newTheatres;
-            } else {
-              return [...prevTheatres, data];
-            }
-          });
+          console.log('Unknown theatre action:', action, theatre_id);
         }
         break;
     }
-  }, []);
+  }, [addTheatre, updateTheatre, deleteTheatre]);
 
-  // Load schedules for a specific date
+  // Initialize WebSocket connection after all handlers are defined and data is fully loaded
+  useEffect(() => {
+    if (auth.isAuthenticated() && isInitialized && !isDataLoading) {
+      const wsClient = require('@/lib/websocket').default;
+      
+      console.log('🔌 Initializing WebSocket connection...');
+      
+      wsClient.onCaseUpdate(handleWebSocketCaseUpdate);
+      wsClient.onSessionUpdate(handleWebSocketSessionUpdate);
+      wsClient.onScheduleUpdate(handleWebSocketScheduleUpdate);
+      wsClient.onBulkScheduleUpdate(handleWebSocketBulkScheduleUpdate);
+      wsClient.onTheatreUpdate(handleWebSocketTheatreUpdate);
+      
+      setWsClient(wsClient);
+
+      return () => {
+        console.log('🔌 Disconnecting WebSocket...');
+        wsClient.disconnect();
+      };
+    }
+  }, [isInitialized, isDataLoading, handleWebSocketCaseUpdate, handleWebSocketSessionUpdate, handleWebSocketScheduleUpdate, handleWebSocketBulkScheduleUpdate, handleWebSocketTheatreUpdate]);
+
+  // Load schedules for a specific date - use schedule_date directly
   const loadSchedulesForDate = async (date: string) => {
+    console.log(`📅 Loading schedules for date: ${date} (called from TraumaBoard)`);
     try {
-      const schedulesResponse = await apiClient.getSchedules({ schedule_date: date });
+      // Get schedules directly by date (this is the correct API approach)
+      const schedulesResponse = await apiClient.getSchedules({ 
+        schedule_date: date 
+      });
       setSchedules(schedulesResponse);
+      console.log(`✅ Schedules loaded for ${date}: ${schedulesResponse.length} schedules`);
     } catch (error) {
       console.error('Error loading schedules for date:', date, error);
       // Don't show toast error for schedule loading failures
     }
   };
 
-  // Load cases for a specific date (scheduled, completed, archived)
-  const loadCasesForDate = async (date: string) => {
+  // Load sessions for a specific date
+  const loadSessionsForDate = async (date: string) => {
+    console.log(`📅 Loading sessions for date: ${date}`);
     try {
-      const casesResponse = await apiClient.getCases({ 
-        surgery_date: date,
-        archived: true 
+      // Get sessions for the specific date
+      const sessionsResponse = await apiClient.getSessions({ 
+        session_date: date 
       });
       
-      // Merge with existing cases, avoiding duplicates
-      setCases(prevCases => {
-        const existingIds = new Set(prevCases.map(c => c.id));
-        const newCases = casesResponse.items.filter(c => !existingIds.has(c.id));
-        return [...prevCases, ...newCases];
+      // Update the sessions in the DataContext
+      // Since sessions are global, we need to merge with existing sessions from other dates
+      // For now, let's replace all sessions (this might need refinement)
+      sessionsResponse.forEach(session => {
+        const existingSession = sessions.find(s => s.id === session.id);
+        if (!existingSession) {
+          addSession(session);
+        } else if (JSON.stringify(existingSession) !== JSON.stringify(session)) {
+          updateSession(session.id, session);
+        }
       });
+      
+      console.log(`✅ Sessions loaded for ${date}: ${sessionsResponse.length} sessions`);
+    } catch (error) {
+      console.error('Error loading sessions for date:', date, error);
+    }
+  };
+
+  // Load cases for a specific date - use schedules instead of surgery dates
+  const loadCasesForDate = async (date: string) => {
+    try {
+      console.log(`📅 Loading cases for date: ${date}`);
+      
+      // Get schedules for the specific date
+      const schedulesResponse = await apiClient.getSchedules({ 
+        schedule_date: date 
+      });
+      
+      console.log(`📅 Found ${schedulesResponse.length} schedules for date ${date}`);
+      
+      // Extract case IDs from schedules
+      const scheduledCaseIds = schedulesResponse
+        .map(schedule => schedule.case_id)
+        .filter(id => id); // Remove any undefined case_ids
+      
+      console.log(`📅 Scheduled case IDs:`, scheduledCaseIds);
+      
+      // Get cases that are scheduled for this date
+      if (scheduledCaseIds.length > 0) {
+        // Filter from existing cases first
+        const scheduledCases = cases.filter(c => scheduledCaseIds.includes(c.id));
+        console.log(`📅 Already have ${scheduledCases.length} cases in context`);
+        
+        // If we don't have all the cases, fetch them individually
+        const missingCaseIds = scheduledCaseIds.filter(id => 
+          !scheduledCases.some(c => c.id === id)
+        );
+        
+        console.log(`📅 Missing case IDs to fetch:`, missingCaseIds);
+        
+        if (missingCaseIds.length > 0) {
+          // Fetch missing cases one by one (since we can't batch by ID)
+          for (const caseId of missingCaseIds) {
+            try {
+              console.log(`📅 Fetching case: ${caseId}`);
+              const caseData = await apiClient.getCase(caseId);
+              console.log(`📅 Fetched case data:`, caseData.name, caseData.status);
+              
+              // Check if case already exists to prevent duplicates
+              const existingCase = cases.find(c => c.id === caseId);
+              if (!existingCase) {
+                console.log(`📅 Adding case to context: ${caseId}`);
+                addCase(caseData);
+              } else {
+                console.log(`🔄 Case ${caseId} already exists, skipping duplicate add in loadCasesForDate`);
+              }
+            } catch (error) {
+              console.error(`Error fetching case ${caseId}:`, error);
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error('Error loading cases for date:', date, error);
     }
@@ -457,7 +474,7 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
   const handleCreateCase = async (caseData: any) => {
     try {
       const newCase = await apiClient.createCase(caseData);
-      setCases(prev => [...prev, newCase]);
+      addCase(newCase);
       toast.success('Case created successfully');
     } catch (error) {
       console.error('Error creating case:', error);
@@ -465,12 +482,10 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
     }
   };
 
-    const handleUpdateCase = async (caseId: string, updates: any) => {
+  const handleUpdateCase = async (caseId: string, updates: any) => {
     try {
       const updatedCase = await apiClient.updateCase(caseId, updates);
-
-      setCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
-
+      updateCaseInContext(caseId, updatedCase);
       toast.success('Case updated successfully');
     } catch (error) {
       console.error('Error updating case:', error);
@@ -481,9 +496,7 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
   const handleDeleteCase = async (caseId: string) => {
     try {
       await apiClient.deleteCase(caseId);
-      
-      setCases(prev => prev.filter(c => c.id !== caseId));
-      
+      deleteCaseInContext(caseId);
       toast.success('Case deleted successfully');
     } catch (error) {
       console.error('Error deleting case:', error);
@@ -494,9 +507,7 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
   const handleCompleteCase = async (caseId: string) => {
     try {
       const updatedCase = await apiClient.updateCase(caseId, { status: 'completed' });
-      
-      setCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
-      
+      updateCaseInContext(caseId, updatedCase);
       toast.success('Case marked as completed');
     } catch (error) {
       console.error('Error completing case:', error);
@@ -507,15 +518,8 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
   const handleArchiveCase = async (caseId: string) => {
     try {
       await apiClient.archiveCase(caseId);
-      
-      const currentCase = cases.find(c => c.id === caseId);
-      
-      if (currentCase) {
-        const archivedCase = { ...currentCase, status: 'archived' as CaseStatus };
-        
-        setCases(prev => prev.filter(c => c.id !== caseId));
-      }
-      
+      // Update case to archived status but keep in context for calendar display
+      updateCaseInContext(caseId, { status: 'archived' });
       toast.success('Case archived successfully');
     } catch (error) {
       console.error('Error archiving case:', error);
@@ -563,9 +567,7 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
 
       await handleUpdateCase(caseId, updates);
       
-      // Manually refresh schedules for this date
-      await loadSchedulesForDate(session.session_date);
-      
+      // WebSocket will handle real-time schedule updates
       toast.success('Case scheduled to session successfully');
     } catch (error) {
       console.error('Error dropping case on session:', error);
@@ -592,9 +594,7 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
 
       await handleUpdateCase(caseId, updates);
       
-      // Manually refresh schedules for this date
-      await loadSchedulesForDate(schedules[0].scheduled_date);
-      
+      // WebSocket will handle real-time schedule updates
       toast.success('Case unscheduled successfully');
     } catch (error) {
       console.error('Error unscheduling case:', error);
@@ -638,9 +638,7 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
 
       await apiClient.updateSchedule(currentSchedule.id, updateData);
       
-      // Manually refresh schedules
-      await loadSchedulesForDate(newSession.session_date);
-      
+      // WebSocket will handle real-time schedule updates
       toast.success('Case moved to new session successfully');
     } catch (error) {
       console.error('Error moving case:', error);
@@ -663,9 +661,7 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
       // Call the reorder API
       await apiClient.reorderSchedules(scheduleIds);
       
-      // Manually refresh schedules
-      await loadSchedulesForDate(firstSchedule.scheduled_date);
-      
+      // WebSocket will handle real-time schedule updates
       toast.success('Case order updated successfully');
     } catch (error) {
       console.error('Error reordering schedules:', error);
@@ -727,7 +723,7 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
   const handleCreateSession = async (sessionData: TheatreSessionCreate) => {
     try {
       const newSession = await apiClient.createSession(sessionData);
-      setSessions(prev => [...prev, newSession]);
+      addSession(newSession);
       toast.success('Session created successfully');
     } catch (error) {
       console.error('Error creating session:', error);
@@ -738,7 +734,7 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
   const handleUpdateSession = async (sessionId: string, updates: TheatreSessionUpdate) => {
     try {
       const updatedSession = await apiClient.updateSession(sessionId, updates);
-      setSessions(prev => prev.map(s => s.id === sessionId ? updatedSession : s));
+      updateSession(sessionId, updatedSession);
       toast.success('Session updated successfully');
     } catch (error) {
       console.error('Error updating session:', error);
@@ -749,7 +745,7 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
   const handleDeleteSession = async (sessionId: string) => {
     try {
       await apiClient.deleteSession(sessionId);
-      setSessions(prev => prev.filter(s => s.id !== sessionId));
+      deleteSession(sessionId);
       toast.success('Session deleted successfully');
     } catch (error) {
       console.error('Error deleting session:', error);
@@ -757,15 +753,25 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
     }
   };
 
-  // Handle date change from calendar
-  const handleDateChange = async (date: string) => {
+  // Handle date change from calendar - with debouncing to prevent duplicate calls
+  const handleDateChange = useCallback(async (date: string) => {
+    // Prevent duplicate processing during React Strict Mode cycles
+    if (lastProcessedDate.current === date) {
+      console.log(`🚫 Date ${date} already processed, skipping duplicate call`);
+      return;
+    }
+    
+    console.log(`🔄 Date change detected: ${date} (TraumaBoard)`);
+    lastProcessedDate.current = date;
+    
     await Promise.all([
       loadSchedulesForDate(date),
+      loadSessionsForDate(date),
       loadCasesForDate(date)
     ]);
-  };
+  }, [loadSchedulesForDate, loadSessionsForDate, loadCasesForDate]);
 
-  if (isLoading) {
+  if (isDataLoading || !isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
@@ -788,6 +794,15 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
                   </p>
                 </div>
                 <NotificationPanel />
+                {/* WebSocket Status Indicator */}
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    wsClient?.isConnected() ? 'bg-green-500' : 'bg-red-500'
+                  }`}></div>
+                  <span className="text-xs text-gray-500">
+                    {wsClient?.getConnectionStatus() || 'disconnected'}
+                  </span>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 {isAdmin && (
@@ -806,6 +821,7 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
                     </button>
                   </>
                 )}
+
                 <button
                   onClick={() => auth.logout()}
                   className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
@@ -818,8 +834,8 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
         </header>
       )}
 
-      {/* Main Content - Scrollable with bottom padding for fixed calendar */}
-      <main className="flex-1 overflow-y-auto pb-96">
+      {/* Main Content - Scrollable with bottom padding for flexible calendar */}
+      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: '70vh' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Dashboard Stats */}
           <DashboardStats />

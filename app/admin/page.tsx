@@ -6,6 +6,7 @@ import { Toaster } from 'react-hot-toast';
 import TraumaBoard from '@/components/TraumaBoard';
 import auth from '@/lib/auth';
 import { User } from '@/lib/types';
+import { DataProvider } from '@/lib/DataContext';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -107,7 +108,9 @@ export default function AdminPage() {
           </div>
 
           {/* Trauma Board with Admin Features */}
-          <TraumaBoard user={user} isAdmin={true} />
+          <DataProvider>
+            <TraumaBoard user={user} isAdmin={true} />
+          </DataProvider>
         </main>
       </div>
     </>

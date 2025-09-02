@@ -6,6 +6,7 @@ import { Case, CaseStatus, SessionType, TheatreSession, CaseSchedule, UserSimple
 import { getCaseStatusColor } from '@/lib/colors';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import apiClient from '@/lib/api';
+import { useData } from '@/lib/DataContext';
 
 interface SingleDayCalendarProps {
   cases: Case[];
@@ -67,27 +68,8 @@ export default function SingleDayCalendar({
   const [isDragging, setIsDragging] = useState(false);
   const [dragOverTheatre, setDragOverTheatre] = useState<string | null>(null);
   
-  // Consultant and anaesthetist lists
-  const [consultants, setConsultants] = useState<UserSimple[]>([]);
-  const [anaesthetists, setAnaesthetists] = useState<UserSimple[]>([]);
-
-  // Load consultants and anaesthetists on component mount
-  useEffect(() => {
-    const loadConsultantsAndAnaesthetists = async () => {
-      try {
-        const [consultantsData, anaesthetistsData] = await Promise.all([
-          apiClient.getConsultants(),
-          apiClient.getAnaesthetists()
-        ]);
-        setConsultants(consultantsData);
-        setAnaesthetists(anaesthetistsData);
-      } catch (error) {
-        console.error('Failed to load consultants and anaesthetists:', error);
-      }
-    };
-
-    loadConsultantsAndAnaesthetists();
-  }, []);
+  // Use centralized data from context
+  const { consultants, anaesthetists } = useData();
 
   const [newSessionData, setNewSessionData] = useState<{
     theatre_id: string;
@@ -434,9 +416,9 @@ export default function SingleDayCalendar({
   const isToday = format(currentDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-10" style={{ height: '33vh' }}>
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-10 flex flex-col" style={{ minHeight: '33vh', maxHeight: '70vh' }}>
       {/* Calendar Header */}
-      <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+      <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium text-gray-900">Single Day Theatre Schedule</h2>
           <div className="flex items-center space-x-2">
@@ -584,7 +566,7 @@ export default function SingleDayCalendar({
                                      return (
                                        <div
                                          key={caseItem.id}
-                                         draggable={caseItem.status !== 'completed'}
+                                         draggable={caseItem.status !== 'completed' && caseItem.status !== 'archived'}
                                          onDragStart={(e) => {
                                            const schedule = schedules.find(s => s.case_id === caseItem.id);
                                            if (schedule) {
@@ -615,7 +597,7 @@ export default function SingleDayCalendar({
                                              </div>
                                            </div>
                                            <div className="flex space-x-1">
-                                             {caseItem.status !== 'completed' && (
+                                             {caseItem.status !== 'completed' && caseItem.status !== 'archived' && (
                                                <button
                                                  onClick={() => onCompleteCase(caseItem.id)}
                                                  className="px-1 py-0.5 text-xs bg-green-600 text-white rounded hover:bg-green-700"

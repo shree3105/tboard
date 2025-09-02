@@ -22,10 +22,18 @@ class WebSocketClient {
 
   private getWebSocketUrl(): string {
     const token = apiClient.getAuthToken();
+    const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'wss://trauma-board-api.onrender.com/ws';
+    
+    // Single connection with all subscription types
+    const subscriptionTypes = [
+      'cases', 'schedules', 'sessions', 
+      'theatres', 'admin', 'calendar'
+    ];
+    
     if (token) {
-      return `wss://trauma-board-api.onrender.com/ws/updates?token=${token}`;
+      return `${baseUrl}/updates?token=${token}&subscription_types=${subscriptionTypes.join(',')}`;
     }
-    return 'wss://trauma-board-api.onrender.com/ws/updates';
+    return `${baseUrl}/updates?subscription_types=${subscriptionTypes.join(',')}`;
   }
 
   private connect(): void {
@@ -73,66 +81,58 @@ class WebSocketClient {
   }
 
   private subscribeToAll(): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.subscriptions.forEach(subscription => {
-        this.ws!.send(JSON.stringify({
-          action: 'subscribe',
-          ...subscription
-        }));
-      });
-    }
+    // No need to send individual subscriptions - backend handles all types
+    console.log('🔌 WebSocket connected with all subscription types');
   }
 
   private handleMessage(message: WebSocketMessage): void {
     switch (message.type) {
+      case 'connection_established':
+        console.log('✅ WebSocket connected with subscriptions:', message.subscriptions || 'all types');
+        break;
+        
       case 'case_update':
         this.callbacks.onCaseUpdate?.(message);
         break;
+        
       case 'schedule_update':
         this.callbacks.onScheduleUpdate?.(message);
         break;
+        
       case 'theatre_update':
         this.callbacks.onTheatreUpdate?.(message);
         break;
+        
       case 'session_update':
         this.callbacks.onSessionUpdate?.(message);
         break;
+        
       case 'bulk_schedule_update':
         this.callbacks.onBulkScheduleUpdate?.(message);
         break;
+        
+      case 'bulk_case_update':
+        this.callbacks.onCaseUpdate?.(message);
+        break;
+        
       case 'system_update':
         this.callbacks.onSystemUpdate?.(message);
         break;
+        
+      default:
+        console.log('Unknown WebSocket message type:', message.type);
     }
   }
 
+  // No need for individual subscriptions - single connection handles all types
   subscribe(subscription: WebSocketSubscription): void {
-    this.subscriptions.push(subscription);
-    
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
-        action: 'subscribe',
-        ...subscription
-      }));
-    }
+    // Backend automatically handles all subscription types
+    console.log('Subscription request (handled automatically):', subscription.type);
   }
 
   unsubscribe(subscription: WebSocketSubscription): void {
-    const index = this.subscriptions.findIndex(sub => 
-      sub.type === subscription.type && 
-      JSON.stringify(sub.filters) === JSON.stringify(subscription.filters)
-    );
-    
-    if (index !== -1) {
-      this.subscriptions.splice(index, 1);
-      
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({
-          action: 'unsubscribe',
-          ...subscription
-        }));
-      }
-    }
+    // Backend automatically handles all subscription types
+    console.log('Unsubscription request (handled automatically):', subscription.type);
   }
 
   onCaseUpdate(callback: (message: WebSocketMessage) => void): void {

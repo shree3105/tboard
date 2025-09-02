@@ -6,6 +6,7 @@ import { Plus, Edit, Trash2, Calendar, Clock, Users, Save, X } from 'lucide-reac
 import { Theatre, TheatreSession, TheatreSessionCreate, TheatreSessionUpdate, SessionType, SessionStatus, UserSimple } from '@/lib/types';
 import { toast } from 'react-hot-toast';
 import apiClient from '@/lib/api';
+import { useData } from '@/lib/DataContext';
 
 interface TheatreSessionManagerProps {
   theatres: Theatre[];
@@ -25,27 +26,8 @@ export default function TheatreSessionManager({
   const [isCreating, setIsCreating] = useState(false);
   const [editingSession, setEditingSession] = useState<string | null>(null);
 
-  // Consultant and anaesthetist lists
-  const [consultants, setConsultants] = useState<UserSimple[]>([]);
-  const [anaesthetists, setAnaesthetists] = useState<UserSimple[]>([]);
-
-  // Load consultants and anaesthetists on component mount
-  useEffect(() => {
-    const loadConsultantsAndAnaesthetists = async () => {
-      try {
-        const [consultantsData, anaesthetistsData] = await Promise.all([
-          apiClient.getConsultants(),
-          apiClient.getAnaesthetists()
-        ]);
-        setConsultants(consultantsData);
-        setAnaesthetists(anaesthetistsData);
-      } catch (error) {
-        console.error('Failed to load consultants and anaesthetists:', error);
-      }
-    };
-
-    loadConsultantsAndAnaesthetists();
-  }, []);
+  // Use centralized data from context
+  const { consultants, anaesthetists } = useData();
 
   // Helper function to get consultant display name
   const getConsultantDisplayName = (session: TheatreSession): string => {

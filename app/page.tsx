@@ -6,6 +6,7 @@ import { Toaster } from 'react-hot-toast';
 import TraumaBoard from '@/components/TraumaBoard';
 import auth from '@/lib/auth';
 import { User } from '@/lib/types';
+import { DataProvider } from '@/lib/DataContext';
 
 export default function HomePage() {
   const router = useRouter();
@@ -43,7 +44,9 @@ export default function HomePage() {
   return (
     <>
       <Toaster position="top-right" />
-      <TraumaBoard user={user} />
+      <DataProvider>
+        <TraumaBoard user={user} />
+      </DataProvider>
     </>
   );
 }

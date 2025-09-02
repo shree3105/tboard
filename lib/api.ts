@@ -54,7 +54,7 @@ import {
 
 // Create axios instance with base configuration
 const api: AxiosInstance = axios.create({
-  baseURL: 'https://trauma-board-api.onrender.com',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://trauma-board-api.onrender.com',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

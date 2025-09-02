@@ -4,33 +4,25 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import apiClient from '@/lib/api';
 import { DashboardStats as DashboardStatsType } from '@/lib/types';
+import { useData } from '@/lib/DataContext';
 
 export default function DashboardStats() {
+  const { caseStatistics } = useData();
   const [stats, setStats] = useState<DashboardStatsType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      setIsLoading(true);
-      const data = await apiClient.getCaseStatistics();
+    if (caseStatistics) {
       setStats({
-        total_cases: data.total_cases,
-        new_referrals: data.new_referrals,
-        awaiting_surgery_cases: data.awaiting_surgery,
-        scheduled_cases: data.scheduled_cases,
-        completed_cases: data.completed_cases
+        total_cases: caseStatistics.total_cases,
+        new_referrals: caseStatistics.new_referrals,
+        awaiting_surgery_cases: caseStatistics.awaiting_surgery,
+        scheduled_cases: caseStatistics.scheduled_cases,
+        completed_cases: caseStatistics.completed_cases
       });
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-      toast.error('Failed to load dashboard statistics');
-    } finally {
       setIsLoading(false);
     }
-  };
+  }, [caseStatistics]);
 
   if (isLoading) {
     return (
