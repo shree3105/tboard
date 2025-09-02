@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
+import { Settings } from 'lucide-react';
 import apiClient from '@/lib/api';
 import auth from '@/lib/auth';
 import { Case, CaseStatus, CaseSubspecialty, PriorityLevel, User, TheatreSession, TheatreSessionCreate, TheatreSessionUpdate, CaseSchedule, CaseScheduleCreate, CaseScheduleUpdate, ScheduleStatus } from '@/lib/types';
@@ -16,13 +17,12 @@ import { useData } from '@/lib/DataContext';
 
 interface TraumaBoardProps {
   user?: User;
-  isAdmin?: boolean;
 }
 
 // Component instance counter to debug duplicate rendering
 let traumaBoardInstanceCount = 0;
 
-export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps) {
+export default function TraumaBoard({ user }: TraumaBoardProps) {
   const router = useRouter();
   
   // Track component instances
@@ -782,57 +782,49 @@ export default function TraumaBoard({ user, isAdmin = false }: TraumaBoardProps)
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      {!isAdmin && (
-        <header className="bg-white shadow-sm border-b flex-shrink-0">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-2">
-              <div className="flex items-center space-x-6">
-                <div>
-                  <h1 className="text-lg font-bold text-gray-900">Trauma Board</h1>
-                  <p className="text-xs text-gray-600">
-                    Welcome back, {user?.first_name} {user?.last_name}
-                  </p>
-                </div>
-                <NotificationPanel />
-                {/* WebSocket Status Indicator */}
-                <div className="flex items-center space-x-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    wsClient?.isConnected() ? 'bg-green-500' : 'bg-red-500'
-                  }`}></div>
-                  <span className="text-xs text-gray-500">
-                    {wsClient?.getConnectionStatus() || 'disconnected'}
-                  </span>
-                </div>
+      <header className="bg-white shadow-sm border-b flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-2">
+            <div className="flex items-center space-x-6">
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Trauma Board</h1>
+                <p className="text-xs text-gray-600">
+                  Welcome back, {user?.first_name} {user?.last_name}
+                </p>
               </div>
+              <NotificationPanel />
+              {/* WebSocket Status Indicator */}
               <div className="flex items-center space-x-2">
-                {isAdmin && (
-                  <>
-                    <button
-                      onClick={() => router.push('/')}
-                      className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
-                    >
-                      Back to Main
-                    </button>
-                    <button
-                      onClick={() => router.push('/admin')}
-                      className="px-2 py-1 text-xs font-medium text-white bg-indigo-600 border border-transparent rounded hover:bg-indigo-700"
-                    >
-                      Admin Panel
-                    </button>
-                  </>
-                )}
-
-                <button
-                  onClick={() => auth.logout()}
-                  className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
-                >
-                  Logout
-                </button>
+                <div className={`w-2 h-2 rounded-full ${
+                  wsClient?.isConnected() ? 'bg-green-500' : 'bg-red-500'
+                }`}></div>
+                <span className="text-xs text-gray-500">
+                  {wsClient?.getConnectionStatus() || 'disconnected'}
+                </span>
               </div>
             </div>
+            <div className="flex items-center space-x-2">
+              {/* Admin Button - Show for admin users */}
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => router.push('/admin')}
+                  className="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-indigo-600 border border-transparent rounded hover:bg-indigo-700 transition-colors"
+                >
+                  <Settings className="h-3 w-3 mr-1" />
+                  Admin Panel
+                </button>
+              )}
+
+              <button
+                onClick={() => auth.logout()}
+                className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+              >
+                Logout
+              </button>
+            </div>
           </div>
-        </header>
-      )}
+        </div>
+      </header>
 
       {/* Main Content - Scrollable with bottom padding for flexible calendar */}
       <main className="flex-1 overflow-y-auto" style={{ paddingBottom: '70vh' }}>
