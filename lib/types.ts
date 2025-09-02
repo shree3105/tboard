@@ -67,6 +67,14 @@ export type PriorityLevel = 'urgent' | 'high' | 'medium' | 'low';
 
 export type GenderType = 'Male' | 'Female' | 'Other';
 
+// ICD Codes for diagnosis
+export interface ICDCodeSimple {
+  id: number;
+  sub_code: string;
+  label: string;
+  is_trauma: boolean;
+}
+
 // UserSimple interface for nested user data
 export interface UserSimple {
   id: string;

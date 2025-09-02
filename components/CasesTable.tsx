@@ -5,6 +5,7 @@ import { Case, CaseStatus, CaseSubspecialty, GenderType, UserSimple, PriorityLev
 import { Edit, Trash2, Save, X, GripVertical, CheckCircle, Archive } from 'lucide-react';
 import { getCaseStatusColor, getSubspecialtyColor, getMainSectionColor } from '@/lib/colors';
 import apiClient from '@/lib/api';
+import ICDDiagnosisDropdown from './ICDDiagnosisDropdown';
 
 interface CasesTableProps {
   cases: Case[];
@@ -513,6 +514,18 @@ export default function CasesTable({
           </select>
         );
       }
+
+      // Special handling for diagnosis field
+      if (field === 'diagnosis') {
+        return (
+          <ICDDiagnosisDropdown
+            value={editingData.diagnosis || ''}
+            onChange={(value) => setEditingData(prev => ({ ...prev, diagnosis: value }))}
+            placeholder="Search diagnosis..."
+            className="w-full px-2 py-1"
+          />
+        );
+      }
       
       return (
         <input
@@ -594,12 +607,11 @@ export default function CasesTable({
           </select>
         </td>
         <td className="table-cell">
-          <input
-            type="text"
+          <ICDDiagnosisDropdown
             value={newCaseData.diagnosis || ''}
-            onChange={(e) => setNewCaseData(prev => ({ ...prev, diagnosis: e.target.value }))}
-            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Diagnosis"
+            onChange={(value) => setNewCaseData(prev => ({ ...prev, diagnosis: value }))}
+            placeholder="Search diagnosis..."
+            className="w-full px-2 py-1"
           />
         </td>
         <td className="table-cell">

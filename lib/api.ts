@@ -696,6 +696,21 @@ const apiClient = {
       const response = await api.get('/admin/system-stats');
       return response.data;
     }
+  },
+
+  // ICD Codes
+  getICDCodes: async (query?: string, limit: number = 100): Promise<Array<{
+    id: number;
+    sub_code: string;
+    label: string;
+    is_trauma: boolean;
+  }>> => {
+    const params = new URLSearchParams();
+    if (query) params.append('q', query);
+    if (limit) params.append('limit', limit.toString());
+    
+    const response = await api.get(`/icd-codes/trauma?${params.toString()}`);
+    return response.data;
   }
 };
 

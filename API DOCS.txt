@@ -2451,56 +2451,50 @@
         ]
       }
     },
-    "/admin/session-config": {
+    "/admin/session-templates": {
       "get": {
         "tags": [
           "Admin"
         ],
-        "summary": "Get Session Config",
-        "description": "Get the single default session configuration (admin only)",
-        "operationId": "get_session_config_admin_session_config_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DefaultSessionConfig"
-                }
-              }
-            }
-          }
-        },
+        "summary": "Get Session Templates",
+        "description": "Get all session templates for the template day (admin only)",
+        "operationId": "get_session_templates_admin_session_templates_get",
         "security": [
           {
             "OAuth2PasswordBearer": []
           }
-        ]
-      },
-      "patch": {
-        "tags": [
-          "Admin"
         ],
-        "summary": "Update Session Config",
-        "description": "Update the single default session configuration (admin only)",
-        "operationId": "update_session_config_admin_session_config_patch",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DefaultSessionConfigUpdate"
-              }
-            }
-          },
-          "required": true
-        },
+        "parameters": [
+          {
+            "name": "is_weekend",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by weekend templates",
+              "title": "Is Weekend"
+            },
+            "description": "Filter by weekend templates"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DefaultSessionConfig"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionTemplate"
+                  },
+                  "title": "Response Get Session Templates Admin Session Templates Get"
                 }
               }
             }
@@ -2515,12 +2509,156 @@
               }
             }
           }
-        },
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create Session Template",
+        "description": "Add a new session to the template day (admin only)",
+        "operationId": "create_session_template_admin_session_templates_post",
         "security": [
           {
             "OAuth2PasswordBearer": []
           }
-        ]
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionTemplateCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionTemplate"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/session-templates/{template_id}": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update Session Template",
+        "description": "Update a session template (admin only)",
+        "operationId": "update_session_template_admin_session_templates__template_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionTemplateUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionTemplate"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete Session Template",
+        "description": "Remove a session from the template day (admin only)",
+        "operationId": "delete_session_template_admin_session_templates__template_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/admin/initialize-sessions/{date}": {
@@ -2529,7 +2667,7 @@
           "Admin"
         ],
         "summary": "Initialize Sessions For Date",
-        "description": "Initialize sessions for a specific date using the default configuration (admin only)",
+        "description": "Initialize sessions for a specific date using the template day (admin only)",
         "operationId": "initialize_sessions_for_date_admin_initialize_sessions__date__post",
         "security": [
           {
@@ -2940,6 +3078,71 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TrendsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/icd-codes/trauma": {
+      "get": {
+        "tags": [
+          "ICD Codes",
+          "ICD Codes"
+        ],
+        "summary": "Get Trauma Codes Dropdown",
+        "description": "Get trauma-related ICD codes for dropdown with optional search.\nReturns only trauma codes (is_trauma = true) with search functionality.",
+        "operationId": "get_trauma_codes_dropdown_icd_codes_trauma_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Search query for trauma codes",
+              "default": "",
+              "title": "Q"
+            },
+            "description": "Search query for trauma codes"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Maximum number of records to return",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Maximum number of records to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ICDCodeSimple"
+                  },
+                  "title": "Response Get Trauma Codes Dropdown Icd Codes Trauma Get"
                 }
               }
             }
@@ -4169,6 +4372,11 @@
       },
       "ConsultantWorkloadResponse": {
         "properties": {
+          "consultant_name": {
+            "type": "string",
+            "title": "Consultant Name",
+            "description": "Full consultant name"
+          },
           "first_name": {
             "type": "string",
             "title": "First Name",
@@ -4179,327 +4387,26 @@
             "title": "Last Name",
             "description": "Consultant last name"
           },
+          "total_cases": {
+            "type": "integer",
+            "title": "Total Cases",
+            "description": "Total number of cases assigned"
+          },
           "case_count": {
             "type": "integer",
             "title": "Case Count",
-            "description": "Number of cases assigned"
+            "description": "Number of cases assigned (legacy field)"
           }
         },
         "type": "object",
         "required": [
+          "consultant_name",
           "first_name",
           "last_name",
+          "total_cases",
           "case_count"
         ],
         "title": "ConsultantWorkloadResponse"
-      },
-      "DefaultSessionConfig": {
-        "properties": {
-          "morning_enabled": {
-            "type": "boolean",
-            "title": "Morning Enabled",
-            "description": "Enable morning sessions",
-            "default": true
-          },
-          "morning_start_time": {
-            "type": "string",
-            "format": "time",
-            "title": "Morning Start Time",
-            "description": "Morning session start time",
-            "default": "08:00:00"
-          },
-          "morning_end_time": {
-            "type": "string",
-            "format": "time",
-            "title": "Morning End Time",
-            "description": "Morning session end time",
-            "default": "12:00:00"
-          },
-          "afternoon_enabled": {
-            "type": "boolean",
-            "title": "Afternoon Enabled",
-            "description": "Enable afternoon sessions",
-            "default": true
-          },
-          "afternoon_start_time": {
-            "type": "string",
-            "format": "time",
-            "title": "Afternoon Start Time",
-            "description": "Afternoon session start time",
-            "default": "13:00:00"
-          },
-          "afternoon_end_time": {
-            "type": "string",
-            "format": "time",
-            "title": "Afternoon End Time",
-            "description": "Afternoon session end time",
-            "default": "17:00:00"
-          },
-          "evening_enabled": {
-            "type": "boolean",
-            "title": "Evening Enabled",
-            "description": "Enable evening sessions",
-            "default": false
-          },
-          "evening_start_time": {
-            "type": "string",
-            "format": "time",
-            "title": "Evening Start Time",
-            "description": "Evening session start time",
-            "default": "18:00:00"
-          },
-          "evening_end_time": {
-            "type": "string",
-            "format": "time",
-            "title": "Evening End Time",
-            "description": "Evening session end time",
-            "default": "22:00:00"
-          },
-          "weekend_enabled": {
-            "type": "boolean",
-            "title": "Weekend Enabled",
-            "description": "Enable sessions on weekends",
-            "default": false
-          },
-          "default_consultant_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Default Consultant Id",
-            "description": "Default consultant ID"
-          },
-          "default_anaesthetist_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Default Anaesthetist Id",
-            "description": "Default anaesthetist ID"
-          },
-          "id": {
-            "type": "string",
-            "title": "Id",
-            "description": "Configuration ID"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "description": "Creation timestamp"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At",
-            "description": "Last update timestamp"
-          },
-          "created_by": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created By",
-            "description": "Creator user ID"
-          },
-          "default_consultant": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserSimple"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Default consultant"
-          },
-          "default_anaesthetist": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserSimple"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Default anaesthetist"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "DefaultSessionConfig"
-      },
-      "DefaultSessionConfigUpdate": {
-        "properties": {
-          "morning_enabled": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Morning Enabled",
-            "description": "Enable morning sessions"
-          },
-          "morning_start_time": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Morning Start Time",
-            "description": "Morning session start time"
-          },
-          "morning_end_time": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Morning End Time",
-            "description": "Morning session end time"
-          },
-          "afternoon_enabled": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Afternoon Enabled",
-            "description": "Enable afternoon sessions"
-          },
-          "afternoon_start_time": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Afternoon Start Time",
-            "description": "Afternoon session start time"
-          },
-          "afternoon_end_time": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Afternoon End Time",
-            "description": "Afternoon session end time"
-          },
-          "evening_enabled": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Evening Enabled",
-            "description": "Enable evening sessions"
-          },
-          "evening_start_time": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Evening Start Time",
-            "description": "Evening session start time"
-          },
-          "evening_end_time": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Evening End Time",
-            "description": "Evening session end time"
-          },
-          "weekend_enabled": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Weekend Enabled",
-            "description": "Enable sessions on weekends"
-          },
-          "default_consultant_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Default Consultant Id",
-            "description": "Default consultant ID"
-          },
-          "default_anaesthetist_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Default Anaesthetist Id",
-            "description": "Default anaesthetist ID"
-          }
-        },
-        "type": "object",
-        "title": "DefaultSessionConfigUpdate"
       },
       "DepartmentSetting": {
         "properties": {
@@ -4617,6 +4524,39 @@
           "services"
         ],
         "title": "HealthResponse"
+      },
+      "ICDCodeSimple": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "ICD code unique identifier"
+          },
+          "sub_code": {
+            "type": "string",
+            "maxLength": 10,
+            "title": "Sub Code",
+            "description": "ICD sub-code"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "ICD code label"
+          },
+          "is_trauma": {
+            "type": "boolean",
+            "title": "Is Trauma",
+            "description": "Whether this is a trauma-related code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sub_code",
+          "label",
+          "is_trauma"
+        ],
+        "title": "ICDCodeSimple"
       },
       "LoginResponse": {
         "properties": {
@@ -4906,6 +4846,335 @@
           "cancelled"
         ],
         "title": "SessionStatus"
+      },
+      "SessionTemplate": {
+        "properties": {
+          "theatre_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Theatre Id",
+            "description": "Theatre ID"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Start Time",
+            "description": "Session start time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "End Time",
+            "description": "Session end time"
+          },
+          "session_type": {
+            "$ref": "#/components/schemas/SessionType",
+            "description": "Session type"
+          },
+          "consultant_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consultant Id",
+            "description": "Assigned consultant ID"
+          },
+          "anaesthetist_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anaesthetist Id",
+            "description": "Assigned anaesthetist ID"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Session notes"
+          },
+          "is_weekend_template": {
+            "type": "boolean",
+            "title": "Is Weekend Template",
+            "description": "Whether this template applies to weekends",
+            "default": false
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "Template unique identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Template creation timestamp"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "Template last update timestamp"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Created By",
+            "description": "User who created the template"
+          },
+          "theatre": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Theatre"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Theatre information"
+          },
+          "consultant": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserSimple"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Assigned consultant information"
+          },
+          "anaesthetist": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserSimple"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Assigned anaesthetist information"
+          }
+        },
+        "type": "object",
+        "required": [
+          "theatre_id",
+          "start_time",
+          "end_time",
+          "session_type",
+          "id",
+          "created_at",
+          "created_by"
+        ],
+        "title": "SessionTemplate"
+      },
+      "SessionTemplateCreate": {
+        "properties": {
+          "theatre_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Theatre Id",
+            "description": "Theatre ID"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Start Time",
+            "description": "Session start time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "End Time",
+            "description": "Session end time"
+          },
+          "session_type": {
+            "$ref": "#/components/schemas/SessionType",
+            "description": "Session type"
+          },
+          "consultant_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consultant Id",
+            "description": "Assigned consultant ID"
+          },
+          "anaesthetist_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anaesthetist Id",
+            "description": "Assigned anaesthetist ID"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Session notes"
+          },
+          "is_weekend_template": {
+            "type": "boolean",
+            "title": "Is Weekend Template",
+            "description": "Whether this template applies to weekends",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "theatre_id",
+          "start_time",
+          "end_time",
+          "session_type"
+        ],
+        "title": "SessionTemplateCreate"
+      },
+      "SessionTemplateUpdate": {
+        "properties": {
+          "theatre_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Theatre Id",
+            "description": "Theatre ID"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time",
+            "description": "Session start time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time",
+            "description": "Session end time"
+          },
+          "session_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SessionType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Session type"
+          },
+          "consultant_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consultant Id",
+            "description": "Assigned consultant ID"
+          },
+          "anaesthetist_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anaesthetist Id",
+            "description": "Assigned anaesthetist ID"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Session notes"
+          },
+          "is_weekend_template": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Weekend Template",
+            "description": "Whether this template applies to weekends"
+          }
+        },
+        "type": "object",
+        "title": "SessionTemplateUpdate"
       },
       "SessionType": {
         "type": "string",
